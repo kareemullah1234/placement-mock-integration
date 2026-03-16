@@ -1,0 +1,1051 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="studentDashboard()" x-init="init()">
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Welcome, {{ user.first_name }}!</h1>
+                    <p class="text-gray-600">Student Dashboard - Mock Interview Platform</p>
+                    {% if user.student_profile %}
+                        <p class="text-sm text-gray-500">Student ID: {{ user.student_profile.student_id }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">{{ user.email }}</span>
+                    <button x-on:click="loadAllInterviews()" class="text-blue-600 hover:text-blue-900">
+                        <i class="fas fa-sync-alt mr-1"></i>Refresh
+                    </button>
+                    <a href="{% url 'logout' %}" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div x-show="!hasCompleteAvailability" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-4" x-cloak>
+         <div class="flex">
+             <div class="flex-shrink-0">
+                 <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+             </div>
+             <div class="ml-3">
+                 <p class="text-sm text-yellow-700">
+                     <strong>Action Required:</strong> Please complete your availability information before requesting an interview.
+                     <button x-on:click="showProfileModal = true" class="underline font-medium">Update Profile Now</button>
+                 </p>
+             </div>
+         </div>
+     </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-clipboard-list text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Interviews</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_interviews }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-check-circle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Completed</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ completed_interviews }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-clock text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Pending</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ pending_interviews }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-star text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Average Score</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {% if average_score %}
+                                {{ average_score|floatformat:1 }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mb-4">
+                        <i class="fas fa-video text-2xl text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Start New Interview</h3>
+                    <p class="text-gray-600 mb-6">Begin a new mock interview session with AI-powered evaluation</p>
+
+                    <button x-on:click="requestInterview()"
+                             x-bind:disabled="hasActiveRequest || !hasCompleteAvailability"
+                             x-bind:class="(hasActiveRequest || !hasCompleteAvailability) ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
+                             class="w-full text-white py-3 px-6 rounded-lg transition duration-200 font-medium">
+                        <i class="fas fa-play mr-2"></i>
+                        <span x-text="!hasCompleteAvailability ? 'Complete Profile First' : (hasActiveRequest ? 'Request Pending' : 'Request Interview')"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <i class="fas fa-user-edit text-2xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Profile Settings</h3>
+                    <p class="text-gray-600 mb-6">Update your profile information and preferences</p>
+
+                    <button x-on:click="showProfileModal = true"
+                            class="w-full inline-block bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition duration-200 font-medium">
+                        <i class="fas fa-cog mr-2"></i>
+                        Manage Profile
+                    </button>
+                    <div class="mt-4 text-sm">
+                     <span x-bind:class="hasCompleteAvailability ? 'text-green-600' : 'text-red-600'" class="font-medium">
+                         <i x-bind:class="hasCompleteAvailability ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'" class="mr-1"></i>
+                         <span x-text="hasCompleteAvailability ? 'Availability Complete' : 'Availability Incomplete'"></span>
+                     </span>
+                 </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Recent Interviews</h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attempt</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="interview in allInterviews" x-bind:key="interview.id">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatDate(interview.created_at)"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="'#' + interview.attempt_number"></td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span x-bind:class="getStatusClass(interview.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="getStatusDisplay(interview.status)"></span>
+                            </td>
+			    <!-- ADD THIS NEW COLUMN -->
+			    <td class="px-6 py-4 whitespace-nowrap text-sm">
+			    	<template x-if="interview.scheduled_at">
+        				<div>
+				            <div class="font-medium text-blue-600" x-text="formatScheduledTime(interview.scheduled_at)"></div>
+					    <template x-if="interview.status === 'approved' && !isInterviewExpired(interview)">
+					    	<div class="text-xs text-gray-500" x-text="getTimeUntilInterview(interview)"></div>
+					    </template>
+				        </div>
+			        </template>
+			        <template x-if="!interview.scheduled_at">
+				        <span class="text-gray-400 text-sm">Not Scheduled</span>
+    				</template>
+			    </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span x-text="interview.overall_score ? interview.overall_score.toFixed(1) + '%' : 'N/A'"></span>
+                                <i x-show="interview.cheating_detected" class="fas fa-exclamation-triangle text-red-500 ml-2" title="Cheating detected"></i>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <template x-if="interview.status === 'completed'">
+    <div class="flex flex-col space-y-2">
+        <!-- View Report -->
+        <a x-bind:href="'/interview/results/' + interview.id + '/'"
+           class="text-indigo-600 hover:text-indigo-900 font-medium">
+           View Report
+        </a>
+
+        <!-- Download PDF -->
+        <a x-bind:href="'/interview/download-report/' + interview.id + '/'"
+           class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 text-center">
+           <i class="fas fa-download mr-1"></i>Download PDF
+        </a>
+    </div>
+</template>
+
+				<template x-if="interview.status === 'approved'">
+				    <div>
+				        <!-- Not scheduled yet -->
+				        <template x-if="!interview.scheduled_at">
+				            <span class="text-gray-500 text-sm">
+				                <i class="fas fa-calendar-times mr-1"></i>Scheduling...
+				            </span>
+				        </template>
+        
+				        <!-- Scheduled but not time yet -->
+				        <template x-if="interview.scheduled_at && !isInterviewTimeActive(interview) && !isInterviewExpired(interview)">
+				            <div>
+				                <button disabled class="bg-yellow-400 text-yellow-900 px-4 py-2 rounded text-sm cursor-not-allowed w-full">
+				                    <i class="fas fa-clock mr-1"></i>Scheduled
+				                </button>
+				                    <div class="text-xs text-gray-600 mt-1 text-center">
+					                    <div x-text="formatScheduledTime(interview.scheduled_at)"></div>
+				                	    <div class="font-semibold" x-text="getTimeUntilInterview(interview)"></div>
+	                		            </div>
+            				    </div>
+				        </template>	
+        
+				        <!-- Time active - can start -->
+				        <template x-if="interview.scheduled_at && isInterviewTimeActive(interview)">
+				            <div>
+				                <button x-on:click="startInterview(interview.id)" 
+			                        class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 font-medium w-full animate-pulse">
+				                    <i class="fas fa-play mr-1"></i>Start Interview Now
+				                </button>
+			                     <div class="text-xs text-green-600 mt-1 font-semibold text-center">
+				                    Available until <span x-text="formatScheduledTime(interview.expires_at)"></span>
+				                </div>
+				            </div>
+				        </template>
+        
+				        <!-- Expired -->
+				        <template x-if="interview.scheduled_at && isInterviewExpired(interview)">
+			        	    <div>
+				                <span class="text-red-500 text-sm font-medium block text-center">
+				                    <i class="fas fa-times-circle mr-1"></i>Interview Expired
+		                		</span>
+				                <div class="text-xs text-red-400 mt-1 text-center">
+				                    Expired at <span x-text="formatScheduledTime(interview.expires_at)"></span>
+				                </div>
+				            </div>
+				        </template>
+				    </div>
+				</template>
+                                <template x-if="interview.status === 'in_progress'">
+                                    <a href="/interview/" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Continue</a>
+                                </template>
+                                <template x-if="interview.status === 'requested'">
+                                    <span class="text-yellow-600 font-medium">Pending Approval</span>
+                                </template>
+                                <template x-if="interview.status === 'cancelled'">
+                                    <span class="text-gray-400">Cancelled</span>
+                                </template>
+                                <template x-if="interview.status === 'expired'">
+                                    <span class="text-red-500">Expired</span>
+                                </template>
+                            </td>
+                        </tr>
+                        </template>
+                        <tr x-show="allInterviews.length === 0">
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-4"></i>
+                                    <p class="text-lg font-medium">No interviews yet</p>
+                                    <p class="text-sm">Request your first interview above to get started!</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+     <div x-show="showProfileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" x-cloak>
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Profile & Availability</h3>
+
+            <form x-on:submit.prevent="updateProfile()" class="space-y-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-900 mb-4">Basic Information</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" x-model="profile.first_name" disabled
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" x-model="profile.last_name" disabled
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" x-model="profile.email" disabled
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input type="tel" x-model="profile.phone_number"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">College</label>
+                            <input type="text" x-model="profile.college" disabled
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                            <input type="text" x-model="profile.course"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Year of Study</label>
+                            <select x-model="profile.year_of_study" disabled
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">
+                                <option value="">Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <template x-for="skill in profile.skills" x-bind:key="skill">
+                                <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm flex items-center">
+                                    <span x-text="skill"></span>
+                                    <button type="button" x-on:click="removeSkill(skill)" class="ml-2 text-indigo-600 hover:text-indigo-800">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                </span>
+                            </template>
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="text" x-model="newSkill" x-on:keyup.enter.prevent="addSkill()"
+                                   placeholder="Add a skill..."
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button type="button" x-on:click="addSkill()"
+                                    class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-900 mb-4">Interview Availability Information</h4>
+		    <div class="bg-white-50 border border-white-200 rounded-lg p-4 mb-6">
+        		<h5 class="text-sm font-semibold text-black-800 mb-3 flex items-center">
+		            Complete Interview Guide
+		        </h5>
+        
+        	    <div class="space-y-4">
+            		<!-- Scheduling Rules -->
+            		<div class="bg-red-50 border border-red-200 p-3 rounded">
+                		<h6 class="font-semibold text-red-800 mb-2">Scheduling Rules:</h6>
+		                <ul class="text-xs text-red-700 space-y-1">
+                	       <li>• <strong>NO next-day slots allowed</strong> - Minimum 48 hours required</li>
+                                <li>• Provide 3 different time slots for scheduling flexibility</li>
+                    		<li>• Once approved, you have limited time to start the interview</li>
+		                </ul>
+            		</div>
+            
+            <!-- Interview Process -->
+	            <div class="bg-blue-50 border border-blue-200 p-3 rounded">
+        	        <h6 class="font-semibold text-blue-800 mb-2">Interview Process (Step by Step):</h6>
+                	<ol class="text-xs text-blue-700 space-y-1">
+                    	<li><strong>1. Pre-Interview:</strong> Grant camera/microphone permissions (one-time only)</li>
+                        <li><strong>2. Enter Fullscreen:</strong> Mandatory for proctoring - cannot exit during interview</li>
+    	                <li><strong>3. Question Flow:</strong> Click "Play Question" → Listen carefully → Can replay if needed</li>
+                        <li><strong>4. Recording:</strong> Click "Start Recording" → Speak your answer clearly → Click "Stop Recording"</li>
+            	        <li><strong>5. Next Question:</strong> Click "Next Question" to proceed (total 6 questions)</li>
+                        <li><strong>6. End Interview:</strong> Click "End Interview" → Wait 2 minutes for processing → Auto-redirect</li>
+                	</ol>
+	            </div>
+            
+	            <!-- Proctoring Rules -->
+        	    <div class="bg-orange-50 border border-orange-200 p-3 rounded">
+                	<h6 class="font-semibold text-orange-800 mb-2">Proctoring rules </h6>  
+               		 <ul class="text-xs text-black-700 space-y-1">
+                    	<li>• <strong>Fullscreen mandatory</strong> - Exiting fullscreen = violation</li>
+                        <li>• <strong>No tab switching</strong> - Switching tabs = violation</li>
+                        <li>• <strong>No window minimizing</strong> - Minimizing = violation</li>
+                        <li>• <strong>Maximum 2 violations allowed</strong> - 3rd violation = auto-termination</li>
+                        <li>• <strong>Stay focused</strong> - Look at camera while speaking</li>
+                        <li>• <strong>No external help</strong> - No notes, no other people, no additional devices</li>
+                	</ul>
+            	</div>
+            
+            <!-- Environment Setup -->
+            <div class="bg-green-50 border border-green-200 p-3 rounded">
+                <h6 class="font-semibold text-green-800 mb-2">Environment Setup:</h6>
+                <ul class="text-xs text-black-700 space-y-1">
+                    <li>• <strong>Quiet room:</strong> No background noise or interruptions</li>
+                    <li>• <strong>Good lighting:</strong> Face should be clearly visible</li>
+                    <li>• <strong>Desktop/Laptop preferred:</strong> Mobile devices not recommended</li>
+                    <li>• <strong>Browser:</strong> Use Chrome or Firefox for best compatibility</li>
+                </ul>
+            </div>
+            
+                
+                <div class="bg-red-50 border border-red-200 p-3 rounded">
+                    <h6 class="font-semibold text-red-800 mb-2">Strictly Prohibited:</h6>
+                    <ul class="text-xs text-black-700 space-y-1">
+                        <li>• Using notes, books, or reference materials</li>
+                        <li>• Having other people in the room</li>
+                        <li>• Using mobile phone or other devices</li>
+                        <li>• Taking screenshots or recordings</li>
+                        <li>• Looking away from camera for extended periods</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Technical Troubleshooting -->
+            <div class="bg-gray-50 border border-gray-200 p-3 rounded">
+                <h6 class="font-semibold text-gray-800 mb-2">Technical Issues:</h6>
+                <ul class="text-xs text-gray-700 space-y-1">
+                    <li>• <strong>Camera not working:</strong> Check browser permissions, do not restart browser</li>
+                    <li>• <strong>Audio issues:</strong> Test microphone before starting, check system volume</li>
+                    <li>• <strong>Browser crashes:</strong> Rejoin immediately, violations may be excused</li>
+                </ul>
+            </div>
+            
+            <!-- Final Reminders -->
+            <div class="bg-purple-50 border border-black-200 p-3 rounded">
+                <h6 class="font-semibold text-black-800 mb-2">Reminders:</h6>
+                <ul class="text-xs text-black-700 space-y-1">
+                    <li>• <strong>Dress professionally</strong> as this is a formal interview</li>
+                    <li>• <strong>Speak clearly and confidently</strong> - you're being evaluated</li>
+                    <li>• <strong>Don't panic if you make mistakes</strong> - stay calm and continue</li>
+                    <li>• <strong>After ending interview, wait for redirect</strong> - don't close browser</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Batch ID <span class="text-red-500">*</span>
+                                <span class="text-xs text-gray-500">(Please mention Complete Batch ID not Project ID)</span>
+                            </label>
+                            <input type="text" x-model="profile.batch_id" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Enter your complete batch ID">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                When will you be available for Mock Interview?</span>
+                            </label>
+                            <select x-model="profile.interview_preference"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Select your preference</option>
+                                <option value="weekend">Preferably Weekend</option>
+                                <option value="working_day">Working Day</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Select 3 time slot options (One will be assigned based on availability) <span class="text-red-500">*</span>
+                                <span class="text-xs text-gray-500">(Provide 3 preferred time slots)</span>
+                            </label>
+
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 bg-white">
+                                <h5 class="text-sm font-medium text-gray-700 mb-3">Time Slot 1 <span class="text-red-500">*</span></h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                                        <input type="date" x-model="profile.availability_slots[0].date" required
+                                               x-bind:min="getTodayDate()"
+                                               x-on:change="updateDayFromDate(0)"
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Day</label>
+                                        <input type="text" x-model="profile.availability_slots[0].day" readonly
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100 text-gray-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">From Time</label>
+                                        <input type="time" x-model="profile.availability_slots[0].from_time" required
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">To Time</label>
+                                        <input type="time" x-model="profile.availability_slots[0].to_time" required
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 bg-white">
+                                <h5 class="text-sm font-medium text-gray-700 mb-3">Time Slot 2 <span class="text-red-500">*</span></h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                                        <input type="date" x-model="profile.availability_slots[1].date" required
+                                               x-bind:min="getTodayDate()"
+                                               x-on:change="updateDayFromDate(1)"
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Day</label>
+                                        <input type="text" x-model="profile.availability_slots[1].day" readonly
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100 text-gray-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">From Time</label>
+                                        <input type="time" x-model="profile.availability_slots[1].from_time" required
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">To Time</label>
+                                        <input type="time" x-model="profile.availability_slots[1].to_time" required
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 bg-white">
+                                <h5 class="text-sm font-medium text-gray-700 mb-3">Time Slot 3 <span class="text-red-500">*</span></h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                                        <input type="date" x-model="profile.availability_slots[2].date" required
+                                               x-bind:min="getTodayDate()"
+                                               x-on:change="updateDayFromDate(2)"
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Day</label>
+                                        <input type="text" x-model="profile.availability_slots[2].day" readonly
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100 text-gray-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">From Time</label>
+                                        <input type="time" x-model="profile.availability_slots[2].from_time" required
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">To Time</label>
+                                        <input type="time" x-model="profile.availability_slots[2].to_time" required
+                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" x-on:click="showProfileModal = false"
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+function studentDashboard() {
+    return {
+        showProfileModal: false,
+        allInterviews: [],
+        hasActiveRequest: false,
+        hasCompleteAvailability: false,
+        profile: {
+            first_name: '{{ user.first_name }}',
+            last_name: '{{ user.last_name }}',
+            email: '{{ user.email }}',
+            phone_number: '{{ user.phone_number|default:"" }}',
+            college: '{{ user.student_profile.college|default:"" }}',
+            course: '{{ user.student_profile.course|default:"" }}',
+            year_of_study: '{{ user.student_profile.year_of_study|default:"" }}',
+            skills: {{ user.student_profile.skills|safe|default:"[]" }},
+            batch_id: '{{ user.student_profile.batch_id|default:"" }}',
+            interview_preference: '{{ user.student_profile.interview_preference|default:"" }}',
+            availability_slots: []
+        },
+        newSkill: '',
+
+	// ADD THESE IST FUNCTIONS HERE
+	// Get current IST time
+	getISTTime() {
+	    const now = new Date();
+	    return new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+	},
+
+	// Check if interview time is currently active
+	isInterviewTimeActive(interview) {
+	    if (!interview.scheduled_at || !interview.expires_at) return false;
+    
+	    const nowIST = this.getISTTime();
+	    const scheduledTime = new Date(interview.scheduled_at);
+	    const expiresTime = new Date(interview.expires_at);
+    	
+	    return nowIST >= scheduledTime && nowIST <= expiresTime;
+	},
+
+	// Check if interview has expired
+	isInterviewExpired(interview) {
+	    if (!interview.expires_at) return false;
+    
+	    const nowIST = this.getISTTime();
+	    const expiresTime = new Date(interview.expires_at);
+    
+	    return nowIST > expiresTime;
+	},
+
+	// Get time remaining until interview starts
+	getTimeUntilInterview(interview) {
+	    if (!interview.scheduled_at) return '';
+    
+	    const nowIST = this.getISTTime();
+	    const scheduledTime = new Date(interview.scheduled_at);
+    
+	    if (nowIST >= scheduledTime) return 'Available now';
+    
+	    const diffMinutes = Math.ceil((scheduledTime - nowIST) / (1000 * 60));
+    
+	    if (diffMinutes < 60) {
+        	return `Starts in ${diffMinutes} minutes`;
+	    } else if (diffMinutes < 1440) {
+	        const hours = Math.ceil(diffMinutes / 60);
+        	return `Starts in ${hours} hours`;
+	    } else {
+	        const days = Math.ceil(diffMinutes / 1440);
+        	return `Starts in ${days} days`;
+	    }
+	},
+
+	// Format scheduled time in IST
+	formatScheduledTime(dateString) {
+	    if (!dateString) return 'Not Set';
+	    const date = new Date(dateString);
+	    return date.toLocaleString("en-IN", {
+	        timeZone: "Asia/Kolkata",
+	        day: '2-digit',
+	        month: 'short',
+	        year: 'numeric',
+        	hour: '2-digit',
+	        minute: '2-digit',
+	        hour12: true
+	    });
+	},
+
+
+        // Get today's date in YYYY-MM-DD format
+        getTodayDate() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        },
+
+        // Update day based on selected date
+        updateDayFromDate(slotIndex) {
+            const date = this.profile.availability_slots[slotIndex].date;
+            if (date) {
+                const dateObj = new Date(date);
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                this.profile.availability_slots[slotIndex].day = days[dateObj.getDay()];
+            }
+        },
+
+        // Initialize availability slots - ensures we always have exactly 3 slots
+        initializeAvailabilitySlots() {
+            // Get existing slots from Django template or create empty ones
+            let existingSlots = {{ user.student_profile.availability_slots|safe|default:"[]" }};
+
+            // Ensure we have exactly 3 slots
+            const slots = [
+                existingSlots[0] || { date: '', day: '', from_time: '', to_time: '' },
+                existingSlots[1] || { date: '', day: '', from_time: '', to_time: '' },
+                existingSlots[2] || { date: '', day: '', from_time: '', to_time: '' }
+            ];
+
+            return slots;
+        },
+
+        init() {
+            console.log('Student dashboard initializing...');
+            // Initialize availability slots properly
+            this.profile.availability_slots = this.initializeAvailabilitySlots();
+
+            this.loadAllInterviews();
+            this.checkAvailabilityStatus();
+
+            // Refresh interviews every 30 seconds to update time remaining
+            setInterval(() => {
+                console.log('Auto-refreshing interviews...');
+                this.loadAllInterviews();
+            }, 30000);
+        },
+
+        // Check availability status
+        checkAvailabilityStatus() {
+            fetch('/api/check-availability/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                this.hasCompleteAvailability = data.has_complete_availability;
+                console.log('Availability status:', this.hasCompleteAvailability);
+
+                // Update availability slots if they exist in response
+                if (data.availability_slots && data.availability_slots.length > 0) {
+                    this.profile.availability_slots = this.ensureThreeSlots(data.availability_slots);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking availability:', error);
+            });
+        },
+
+        // Ensure we always have exactly 3 slots
+        ensureThreeSlots(slots) {
+            const ensuredSlots = [
+                slots[0] || { date: '', day: '', from_time: '', to_time: '' },
+                slots[1] || { date: '', day: '', from_time: '', to_time: '' },
+                slots[2] || { date: '', day: '', from_time: '', to_time: '' }
+            ];
+            return ensuredSlots;
+        },
+
+        // Validate all availability fields
+        validateAvailabilityData() {
+            // Check batch_id
+            if (!this.profile.batch_id || this.profile.batch_id.trim() === '') {
+                return { isValid: false, message: 'Batch ID is required' };
+            }
+
+            // Check interview preference
+            if (!this.profile.interview_preference || this.profile.interview_preference === '') {
+                return { isValid: false, message: 'Interview preference is required' };
+            }
+
+            // Check all 3 time slots
+            for (let i = 0; i < 3; i++) {
+                const slot = this.profile.availability_slots[i];
+
+                if (!slot.date || slot.date.trim() === '') {
+                    return { isValid: false, message: `Date is required for Time Slot ${i + 1}` };
+                }
+
+                if (!slot.day || slot.day.trim() === '') {
+                    return { isValid: false, message: `Day is required for Time Slot ${i + 1}` };
+                }
+
+                if (!slot.from_time || slot.from_time.trim() === '') {
+                    return { isValid: false, message: `From Time is required for Time Slot ${i + 1}` };
+                }
+
+                if (!slot.to_time || slot.to_time.trim() === '') {
+                    return { isValid: false, message: `To Time is required for Time Slot ${i + 1}` };
+                }
+
+                // Validate that to_time is after from_time
+                if (slot.from_time && slot.to_time && slot.from_time >= slot.to_time) {
+                    return { isValid: false, message: `End time must be after start time for Time Slot ${i + 1}` };
+                }
+            }
+
+            return { isValid: true, message: 'All availability information is complete' };
+        },
+
+        loadAllInterviews() {
+            console.log('Loading all interviews...');
+            // FIXED: Use the correct endpoint from your URLs
+            fetch('/interview/api/interviews/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('Interviews response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Interviews loaded:', data.length);
+                this.allInterviews = data;
+                // Check if user has active request or approved interview
+                this.hasActiveRequest = this.allInterviews.some(interview =>
+                    interview.status === 'requested' || interview.status === 'approved'
+                );
+                console.log('Has active request:', this.hasActiveRequest);
+                console.log('Interview statuses:', this.allInterviews.map(i => i.status));
+            })
+            .catch(error => {
+                console.error('Error loading all interviews:', error);
+                showNotification('Failed to load interview history: ' + error.message, 'error');
+            });
+        },
+
+        // Request interview function
+        requestInterview() {
+            if (!this.hasCompleteAvailability) {
+                showNotification('Please complete your availability information in your profile first.', 'warning');
+                this.showProfileModal = true;
+                return;
+            }
+
+            console.log('Requesting interview...');
+            fetch('/interview/api/request-interview/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                console.log('Request response status:', response.status);
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Interview requested successfully:', data);
+                showNotification(data.message, 'success');
+                this.loadAllInterviews();
+            })
+            .catch(error => {
+                console.error('Error requesting interview:', error);
+                showNotification(error.error || 'Failed to submit request', 'error');
+            });
+        },
+	startInterview(interviewId) {
+    console.log('Starting interview:', interviewId);
+    
+    const interview = this.allInterviews.find(i => i.id === interviewId);
+    if (!interview) {
+        showNotification('Interview not found', 'error');
+        return;
+    }
+    
+    // Check if scheduled time is set
+    if (!interview.scheduled_at) {
+        showNotification('Interview time not scheduled yet. Please wait for admin to set the time.', 'error');
+        return;
+    }
+    
+    const nowIST = this.getISTTime();
+    const scheduledTime = new Date(interview.scheduled_at);
+    const expiresTime = new Date(interview.expires_at);
+    
+    // STRICT: Only allow starting within scheduled window
+    if (nowIST < scheduledTime) {
+        const minutesToStart = Math.ceil((scheduledTime - nowIST) / (1000 * 60));
+        showNotification(`Interview is scheduled for ${this.formatScheduledTime(interview.scheduled_at)}. Please wait ${minutesToStart} minutes to start.`, 'warning');
+        return;
+    }
+    
+    if (nowIST > expiresTime) {
+        showNotification(`Interview window has expired. It was available until ${this.formatScheduledTime(interview.expires_at)}.`, 'error');
+        return;
+    }
+    
+    // Start the interview
+    fetch(`/interview/start/${interviewId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Interview started successfully', 'success');
+            window.location.href = data.redirect_url || '/interview/';
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error starting interview:', error);
+        showNotification('Failed to start interview', 'error');
+        this.loadAllInterviews();
+    });
+	},
+        // Update profile with proper validation
+        updateProfile() {
+            console.log('Updating profile...');
+
+            // Validate availability data
+            const validation = this.validateAvailabilityData();
+            if (!validation.isValid) {
+                showNotification(validation.message, 'error');
+                return;
+            }
+
+            // Ensure we're sending exactly 3 slots
+            const profileData = {
+                ...this.profile,
+                availability_slots: this.ensureThreeSlots(this.profile.availability_slots)
+            };
+
+            console.log('Sending profile data:', profileData);
+
+            fetch('/api/update-profile/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(profileData)
+            })
+            .then(response => {
+                console.log('Profile update response status:', response.status);
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Profile updated successfully:', data);
+                showNotification('Profile updated successfully', 'success');
+                this.hasCompleteAvailability = data.has_complete_availability;
+                this.showProfileModal = false;
+
+                // Refresh availability status
+                this.checkAvailabilityStatus();
+            })
+            .catch(error => {
+                console.error('Error updating profile:', error);
+                showNotification(error.message || 'Failed to update profile', 'error');
+            });
+        },
+
+        addSkill() {
+            if (this.newSkill.trim() && !this.profile.skills.includes(this.newSkill.trim())) {
+                this.profile.skills.push(this.newSkill.trim());
+                this.newSkill = '';
+            }
+        },
+
+        removeSkill(skill) {
+            this.profile.skills = this.profile.skills.filter(s => s !== skill);
+        },
+
+	// IST utility function (ADD THIS NEW FUNCTION)
+	formatISTTime(dateString) {
+	    if (!dateString) return 'Not Set';
+	    const date = new Date(dateString);
+	    return date.toLocaleString("en-IN", {
+	        timeZone: "Asia/Kolkata",
+	        day: '2-digit',
+	        month: 'short',
+        	year: 'numeric',
+	        hour: '2-digit',
+        	minute: '2-digit',
+	        hour12: true
+	    }) + ' IST';
+	},
+
+	// UPDATE the existing formatDate function
+	formatDate(dateString) {
+    		return this.formatISTTime(dateString);
+	},
+        getStatusClass(status) {
+            const classes = {
+                'requested': 'bg-yellow-100 text-yellow-800',
+                'approved': 'bg-blue-100 text-blue-800',
+                'scheduled': 'bg-purple-100 text-purple-800',
+                'in_progress': 'bg-indigo-100 text-indigo-800',
+                'completed': 'bg-green-100 text-green-800',
+                'cancelled': 'bg-red-100 text-red-800',
+                'expired': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        getStatusDisplay(status) {
+            const displays = {
+                'requested': 'Pending Approval',
+                'approved': 'Ready to Start',
+                'scheduled': 'Scheduled',
+                'in_progress': 'In Progress',
+                'completed': 'Completed',
+                'cancelled': 'Cancelled',
+                'expired': 'Expired'
+            };
+            return displays[status] || status;
+        }
+	
+    }
+}
+
+// Helper function to show notifications
+function showNotification(message, type = 'info') {
+     const notification = document.createElement('div');
+     notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+         type === 'success' ? 'bg-green-600' :
+         type === 'error' ? 'bg-red-600' :
+         type === 'warning' ? 'bg-yellow-600' :
+         'bg-blue-600'
+     }`;
+     notification.textContent = message;
+
+     document.body.appendChild(notification);
+
+     setTimeout(() => {
+         if (notification.parentNode) {
+             notification.parentNode.removeChild(notification);
+         }
+     }, 5000);
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<div class="container">
+
+<head>
+    <title>Candidate Profile</title>
+</head>
+
+<body>
+
+<h2>Upload Resume</h2>
+
+{% if candidate.resume %}
+<p><b>Current Resume:</b> {{ candidate.resume.url }}</p>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <input type="file" name="resume" required>
+
+    <br><br>
+
+    <button type="submit">Upload Resume</button>
+
+</form>
+
+</body>
+</div>
+</html>

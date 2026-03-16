@@ -1,0 +1,94 @@
+/* General page styling */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+}
+
+/* Page container */
+.container {
+    width: 60%;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Headings */
+h1, h2, h3 {
+    text-align: center;
+    color: #333;
+}
+
+/* Forms */
+form {
+    margin-top: 20px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* Buttons */
+button {
+    background-color: #2d89ef;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+button:hover {
+    background-color: #1b5fbf;
+}
+
+/* Job cards */
+.job-card {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.job-card h3 {
+    margin-top: 0;
+}
+
+/* Apply button */
+.apply-btn {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #28a745;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.apply-btn:hover {
+    background: #1e7e34;
+}
+
+/* Navigation bar */
+.navbar {
+    background: #2d89ef;
+    padding: 15px;
+    color: white;
+}
+
+.navbar h2 {
+    margin: 0;
+}

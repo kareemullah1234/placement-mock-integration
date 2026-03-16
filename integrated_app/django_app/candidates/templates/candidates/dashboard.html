@@ -1,0 +1,68 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+<div class="container">
+
+<h2>Candidate Dashboard</h2>
+
+<div style="margin-bottom:20px">
+
+<a class="btn" href="/companies/jobs/">Browse Available Jobs</a>
+
+<a class="resume-link" href="/candidates/profile/">Update Resume</a>
+
+</div>
+
+<h3>Applied Jobs</h3>
+
+<table>
+
+<tr>
+<th>Job</th>
+<th>Company</th>
+<th>Status</th>
+<th>Test</th>
+</tr>
+
+{% for application in applications %}
+
+<tr>
+<td>{{ application.job.title }}</td>
+<td>{{ application.job.company.company_name }}</td>
+<td>{{ application.status }}</td>
+
+<td>
+
+{% if application.test_scheduled_at %}
+
+    {% if application.test_scheduled_at <= now %}
+
+        <a class="btn" href="/assessments/start-test/{{ application.id }}/">
+        Start Test
+        </a>
+
+    {% else %}
+
+        Test scheduled at {{ application.test_scheduled_at }}
+
+    {% endif %}
+
+{% else %}
+
+    Test not scheduled yet
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+</table>
+{% if messages %}
+{% for message in messages %}
+<p style="color:red;">{{ message }}</p>
+{% endfor %}
+{% endif %}
+</div>

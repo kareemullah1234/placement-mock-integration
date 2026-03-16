@@ -1,0 +1,188 @@
+﻿question,category,difficulty
+What is Python and why is it widely used in Data Science?,Python,Medium
+How does Python manage memory and garbage collection?,Python,Easy
+What are variables in Python and how are they declared?,Python,Easy
+Explain basic data types in Python.,Python,Easy
+What are numbers and booleans in Python?,Python,Easy
+How do strings work in Python?,Python,Medium
+Explain arithmetic operators in Python with examples.,Python,Easy
+What are comparison operators in Python?,Python,Easy
+What are assignment operators in Python?,Python,Easy
+What is an IF statement in Python?,Python,Easy
+Explain IF-ELSE statement with an example.,Python,Medium
+What is a nested IF statement?,Python,Easy
+What are loops in Python?,Python,Easy
+Explain the WHILE loop.,Python,Easy
+Explain the FOR loop.,Python,Medium
+What is the difference between FOR and WHILE loops?,Python,Easy
+What are BREAK and CONTINUE statements?,Python,Easy
+What are basic data structures in Python?,Python,Easy
+What is a list and how is it created?,Python,Medium
+Explain list methods in Python.,Python,Easy
+What is a tuple and how is it different from a list?,Python,Easy
+Explain tuple methods.,Python,Easy
+What are sets and their properties?,Python,Medium
+Explain set methods.,Python,Easy
+What is a dictionary in Python?,Python,Medium
+Explain dictionary methods.,Python,Easy
+What is a function in Python?,Python,Medium
+How does parameter passing work in Python?,Python,Medium
+What are lambda functions?,Python,Medium
+"Explain map(), filter(), and reduce() functions.",Python,Medium
+What is the difference between a normal function and a lambda function?,Python,Easy
+What is Statistics?,Statistics,Medium
+Difference between Descriptive and Inferential Statistics?,Statistics,Easy
+What are basic statistical terms like population and sample?,Statistics,Easy
+What are the types of data in statistics?,Statistics,Easy
+What is qualitative vs quantitative data?,Statistics,Easy
+What is random sampling?,Sampling,Medium
+What is sampling with replacement and without replacement?,Sampling,Hard
+What is Cochran’s minimum sample size formula?,Sampling,Medium
+What are the different types of sampling?,Sampling,Easy
+Explain simple random sampling.,Sampling,Medium
+What is stratified sampling?,Sampling,Medium
+What is cluster sampling?,Sampling,Medium
+What is systematic sampling?,Sampling,Medium
+What is multi-stage sampling?,Sampling,Easy
+What is sampling error?,Sampling,Medium
+What are methods of collecting data?,Sampling,Easy
+What is Exploratory Data Analysis?,EDA,Easy
+"What is mean, median, and mode?",EDA,Medium
+What is variance and standard deviation?,EDA,Easy
+What is range in statistics?,EDA,Easy
+What is a histogram?,EDA,Easy
+What is normal distribution?,EDA,Medium
+What is Z-score?,EDA,Medium
+Explain the Empirical Rule.,EDA,Medium
+What are outliers?,EDA,Medium
+What is Central Limit Theorem?,EDA,Medium
+What is normality testing?,EDA,Medium
+What is skewness?,EDA,Medium
+What is kurtosis?,EDA,Medium
+Explain Euclidean distance.,EDA,Medium
+What is Manhattan distance?,EDA,Medium
+What is Minkowski distance?,EDA,Medium
+What is covariance?,EDA,Easy
+What is correlation?,EDA,Easy
+What is hypothesis testing?,EDA,Easy
+What is a p-value?,EDA,Medium
+What is a critical region?,Hypothesis Testing,Medium
+What are Type I and Type II errors?,Hypothesis Testing,Medium
+What is a two-sample independent t-test?,Hypothesis Testing,Medium
+What is a paired t-test?,Hypothesis Testing,Medium
+What is One Way ANOVA?,Hypothesis Testing,Easy
+Where is hypothesis testing applied?,Hypothesis Testing,Easy
+What is Machine Learning?,Hypothesis Testing,Easy
+Difference between AI and ML?,Hypothesis Testing,Easy
+What is classification?,Machine Learning,Easy
+What is regression?,Machine Learning,Medium
+What is clustering?,Machine Learning,Easy
+Difference between supervised and unsupervised learning?,Machine Learning,Easy
+What is NumPy?,Machine Learning,Medium
+What is a NumPy array?,Machine Learning,Medium
+Difference between list and NumPy array?,NumPy,Medium
+Explain broadcasting in NumPy.,NumPy,Easy
+Explain matrix operations in NumPy.,NumPy,Easy
+What is Pandas?,NumPy,Easy
+What is a Series in Pandas?,NumPy,Medium
+What is a DataFrame?,Pandas,Medium
+How do you read files in Pandas?,Pandas,Medium
+What is data munging?,Pandas,Easy
+How do you handle missing values in Pandas?,Pandas,Easy
+What is Matplotlib?,Pandas,Easy
+What are components of a plot?,Pandas,Easy
+What are subplots?,Matplotlib,Easy
+Explain line plot.,Matplotlib,Medium
+Explain bar plot.,Matplotlib,Medium
+Explain pie chart.,Matplotlib,Medium
+Explain scatter plot.,Matplotlib,Easy
+What is Seaborn?,Matplotlib,Medium
+Difference between Matplotlib and Seaborn?,Matplotlib,Medium
+Explain a basic Seaborn plot.,Seaborn,Medium
+What are advanced visualizations in Seaborn?,Seaborn,Medium
+What is Linear Regression?,Seaborn,Medium
+How does the best fit line work?,Seaborn,Medium
+How do you evaluate a regression model?,Linear Regression,Medium
+What are assumptions of linear regression?,Linear Regression,Easy
+What is Logistic Regression?,Linear Regression,Easy
+What is sigmoid function?,Linear Regression,Easy
+How do you evaluate classification models?,Logistic Regression,Medium
+What is confusion matrix?,Logistic Regression,Medium
+What is clustering?,Logistic Regression,Medium
+Explain K-Means algorithm.,Logistic Regression,Medium
+What is the elbow method?,Clustering,Easy
+How is K-Means implemented in Python?,Clustering,Easy
+What is KNN algorithm?,Clustering,Medium
+How does KNN work?,Clustering,Medium
+What is the role of distance metrics in KNN?,KNN,Medium
+How do you evaluate KNN?,KNN,Medium
+What is feature engineering?,KNN,Medium
+What is encoding?,KNN,Medium
+What is feature scaling?,Feature Engineering,Medium
+How do you handle missing values?,Feature Engineering,Medium
+What is pipeline in ML?,Feature Engineering,Medium
+How do you handle outliers?,Feature Engineering,Medium
+What is SVM?,Feature Engineering,Medium
+What is kernel trick?,Feature Engineering,Medium
+What are different kernels in SVM?,SVM,Medium
+How is SVM evaluated?,SVM,Medium
+What is PCA?,SVM,Medium
+How does PCA reduce dimensionality?,SVM,Medium
+What are principal components?,PCA,Medium
+How is PCA implemented in Python?,PCA,Medium
+What is Decision Tree?,PCA,Medium
+What is Random Forest?,PCA,Medium
+What is entropy and Gini index?,Decision Tree,Medium
+How do you evaluate tree models?,Decision Tree,Medium
+What is ensemble learning?,Decision Tree,Medium
+What is bagging?,Decision Tree,Medium
+How does bagging reduce overfitting?,Ensemble,Medium
+What is Naïve Bayes?,Ensemble,Medium
+Explain Bayes’ Theorem.,Ensemble,Medium
+How is Naïve Bayes used for text classification?,Naive Bayes,Medium
+What is boosting?,Naive Bayes,Medium
+What is XGBoost?,Naive Bayes,Medium
+How is XGBoost different from Random Forest?,Boosting,Medium
+What is time series data?,Boosting,Medium
+What is stationarity?,Boosting,Medium
+What is ARIMA?,Time Series,Medium
+What is autocorrelation?,Time Series,Medium
+What is AIC?,Time Series,Medium
+What is sentiment analysis?,Time Series,Medium
+What is NLTK?,Time Series,Medium
+How do you perform sentiment analysis on text?,NLP,Medium
+What is Regular Expression?,NLP,Medium
+Common regex patterns?,NLP,Medium
+How do you extract text using regex in Python?,Regex,Medium
+What is Flask?,Regex,Medium
+What is app routing in Flask?,Regex,Medium
+How do you deploy an ML model using Flask?,Flask,Medium
+What are core Excel functions?,Flask,Medium
+Explain VLOOKUP.,Flask,Medium
+What is Goal Seek?,Excel,Medium
+What is Pivot Table?,Excel,Medium
+How do you perform regression in Excel?,Excel,Medium
+What is cloud computing?,Excel,Medium
+"Difference between AWS, Azure and GCP?",Excel,Medium
+What is EC2?,Cloud,Medium
+What is DBMS?,Cloud,Medium
+What is RDBMS?,Cloud,Medium
+What are CRUD operations?,Database,Medium
+What is SQL?,Database,Medium
+What are SQL commands?,Database,Medium
+Difference between WHERE and HAVING?,SQL,Medium
+What is GROUP BY?,SQL,Medium
+What is subquery?,SQL,Medium
+What is INNER JOIN?,SQL,Medium
+What is LEFT JOIN?,SQL,Medium
+What is RIGHT JOIN?,SQL Join,Medium
+What is FULL OUTER JOIN?,SQL Join,Medium
+What is SELF JOIN?,SQL Join,Medium
+What are window functions?,SQL Join,Medium
+What is NoSQL?,SQL Join,Medium
+Difference between NoSQL and SQL?,SQL Join,Medium
+What is MongoDB?,NoSQL,Medium
+What is document structure in MongoDB?,NoSQL,Medium
+What are key methods in MongoDB?,NoSQL,Medium
+,NoSQL,Medium
+,NoSQL,Medium

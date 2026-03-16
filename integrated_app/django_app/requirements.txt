@@ -1,0 +1,12 @@
+Django>=5.0
+mysqlclient>=2.2.0
+gunicorn>=21.2.0
+python-dotenv>=1.0.0
+PyPDF2>=3.0.0
+requests>=2.31.0
+pytz>=2025.2
+reportlab>=4.0.0
+hdfs>=2.7.0
+gTTS>=2.5.0
+kafka-python>=2.0.2
+google-genai>=1.0.0

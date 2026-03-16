@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Select Test Time</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    background-color:#f4f6f9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    background:white;
+    padding:40px;
+    border-radius:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+    text-align:center;
+    width:350px;
+}
+
+h2{
+    margin-bottom:30px;
+    color:#333;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:6px;
+    background-color:#4CAF50;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background-color:#45a049;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Select Test Time</h2>
+
+<form method="POST">
+{% csrf_token %}
+
+<button type="submit" name="slot" value="10min">
+Start After 10 Minutes
+</button>
+
+<button type="submit" name="slot" value="1day">
+Tomorrow
+</button>
+
+<button type="submit" name="slot" value="2days">
+After 2 Days
+</button>
+
+<button type="submit" name="slot" value="now">
+Start test now
+</button>
+
+</form>
+
+</div>
+
+</body>
+</html>

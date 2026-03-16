@@ -1,0 +1,15 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<div class="container">
+<h2>Test Result</h2>
+
+<p>Your Score: {{ score }}</p>
+
+{% if passed %}
+<h3 style="color:green;">You Passed</h3>
+{% else %}
+<h3 style="color:red;">You Failed</h3>
+{% endif %}
+</div>

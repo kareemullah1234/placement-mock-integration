@@ -1,0 +1,3 @@
+-r requirements.txt
+-r integrations/services/mock_interview_audio_api/app/requirements.txt
+-r integrations/pipelines/dlib_video/requirements.txt

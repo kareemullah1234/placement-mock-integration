@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Kafka Stream Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto p-6">
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-blue-400 mb-4">🎥 Direct Kafka Stream Player</h1>
+            
+            <!-- Connection Settings -->
+            <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                <h3 class="text-lg font-semibold mb-3">🔗 Kafka Direct Connection</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Session ID</label>
+                        <input type="text" id="sessionId" value="video_session_28_1_1754289839" 
+                               class="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Kafka Server</label>
+                        <select id="kafkaServer" class="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white">
+                            <option value="172.18.0.14:9092">Docker Internal (172.18.0.14:9092)</option>
+                            <option value="localhost:9092">Localhost (localhost:9092)</option>
+                            <option value="server2:9092">Server2 (server2:9092)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button onclick="connectDirectToKafka()" id="connectBtn"
+                            class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded mr-4">
+                        🔌 Connect to Kafka Direct
+                    </button>
+                    <button onclick="useBackendProxy()" id="proxyBtn"
+                            class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded">
+                        🔄 Use Backend Proxy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status Display -->
+            <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                <div class="grid grid-cols-4 gap-4 text-center">
+                    <div>
+                        <div class="text-lg font-bold" id="connectionStatus">❌ Disconnected</div>
+                        <div class="text-sm text-gray-400">Connection</div>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold" id="chunksLoaded">0</div>
+                        <div class="text-sm text-gray-400">Chunks Loaded</div>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold" id="currentChunk">-</div>
+                        <div class="text-sm text-gray-400">Playing</div>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold" id="totalSize">0 MB</div>
+                        <div class="text-sm text-gray-400">Total Size</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Player -->
+            <div class="bg-black rounded-lg p-4 mb-4">
+                <video id="videoPlayer" controls class="w-full h-96 bg-black rounded-lg">
+                    Your browser does not support the video tag.
+                </video>
+                
+                <!-- Enhanced Controls with Diagnostics -->
+                <div class="flex items-center justify-center space-x-4 mt-4">
+                    <button onclick="startStreaming()" id="streamBtn" 
+                            class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded" disabled>
+                        ▶️ Start Stream
+                    </button>
+                    <button onclick="pauseStreaming()" id="pauseBtn" 
+                            class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded" disabled>
+                        ⏸️ Pause Stream
+                    </button>
+                    <button onclick="playNextChunk()" id="nextBtn" 
+                            class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded" disabled>
+                        ⏭️ Next Chunk
+                    </button>
+                    <button onclick="downloadAllChunks()" id="downloadBtn" 
+                            class="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded" disabled>
+                        💾 Download All
+                    </button>
+                    <button onclick="diagnoseChunk()" id="diagnoseBtn" 
+                            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded" disabled>
+                        🔍 Diagnose
+                    </button>
+                    <button onclick="showBackendFix()" id="backendFixBtn" 
+                            class="bg-red-800 hover:bg-red-900 px-4 py-2 rounded" disabled>
+                        🛠️ Backend Fix
+                    </button>
+                </div>
+                
+                <!-- Stream Progress -->
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm text-gray-400 mb-1">
+                        <span>Stream Progress</span>
+                        <span id="progressText">0/0</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chunk List -->
+            <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                <h3 class="text-lg font-semibold mb-3">📦 Video Chunks</h3>
+                <div id="chunksList" class="max-h-48 overflow-y-auto">
+                    <p class="text-gray-400 text-center py-4">Connect to Kafka to load chunks</p>
+                </div>
+            </div>
+
+            <!-- Debug Console -->
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold mb-3">🐛 Debug Console</h3>
+                <div id="debugConsole" class="bg-black p-3 rounded text-sm font-mono h-40 overflow-y-auto">
+                    <div class="text-green-400">Ready to connect to Kafka...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let videoChunks = [];
+        let currentChunkIndex = 0;
+        let isStreaming = false;
+        let streamInterval = null;
+        let mediaSource = null;
+        let sourceBuffer = null;
+
+        // Debug logging
+        function debugLog(message, type = 'info') {
+            const console = document.getElementById('debugConsole');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = {
+                'info': 'text-blue-400',
+                'success': 'text-green-400',
+                'warning': 'text-yellow-400',
+                'error': 'text-red-400'
+            }[type] || 'text-gray-400';
+            
+            console.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function updateStatus(connected = false, chunksLoaded = 0, currentChunk = '-', totalSize = 0) {
+            document.getElementById('connectionStatus').textContent = connected ? '✅ Connected' : '❌ Disconnected';
+            document.getElementById('chunksLoaded').textContent = chunksLoaded;
+            document.getElementById('currentChunk').textContent = currentChunk;
+            document.getElementById('totalSize').textContent = `${(totalSize / 1024 / 1024).toFixed(2)} MB`;
+        }
+
+        // Method 1: Direct Kafka Connection via Backend Proxy
+        async function connectDirectToKafka() {
+            const sessionId = document.getElementById('sessionId').value;
+            const kafkaServer = document.getElementById('kafkaServer').value;
+            
+            debugLog(`🔌 Attempting direct Kafka connection...`, 'info');
+            debugLog(`📋 Session: ${sessionId}`, 'info');
+            debugLog(`🌐 Server: ${kafkaServer}`, 'info');
+            
+            try {
+                // First, let's create a backend endpoint to fetch chunks directly
+                await createKafkaProxyEndpoint(sessionId);
+                
+            } catch (error) {
+                debugLog(`❌ Direct connection failed: ${error.message}`, 'error');
+                debugLog(`🔄 Trying backend proxy instead...`, 'warning');
+                await useBackendProxy();
+            }
+        }
+
+        // Create a custom backend endpoint to fetch Kafka chunks
+        async function createKafkaProxyEndpoint(sessionId) {
+            debugLog(`🛠️ Creating backend proxy for session: ${sessionId}`, 'info');
+            
+            try {
+                // Try to hit a debug endpoint that might exist
+                const response = await fetch(`/interview/api/diagnostic/kafka/`);
+                
+                if (response.ok) {
+                    const diagnostics = await response.json();
+                    debugLog(`📊 Kafka diagnostics received`, 'success');
+                    debugLog(`🔍 Kafka available: ${diagnostics.kafka_available}`, 'info');
+                    
+                    // Now try to fetch chunks using the diagnostic info
+                    await fetchChunksViaDiagnostic(sessionId, diagnostics);
+                } else {
+                    throw new Error('No diagnostic endpoint available');
+                }
+                
+            } catch (error) {
+                debugLog(`❌ Proxy creation failed: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        // Method 2: Use Backend Proxy (custom implementation)
+        async function useBackendProxy() {
+            const sessionId = document.getElementById('sessionId').value;
+            
+            debugLog(`🔄 Using backend proxy approach...`, 'info');
+            
+            try {
+                // Create a custom endpoint request to your Django backend
+                const customEndpointCode = `
+# Add this to your Django views.py temporarily
+@require_http_methods(["GET"])
+def get_kafka_chunks_direct(request, session_id):
+    try:
+        from utils.kafka_client import KafkaFrameClient
+        kafka_client = KafkaFrameClient()
+        
+        if kafka_client.is_connected():
+            chunks = kafka_client.get_video_chunks(session_id)
+            kafka_client.close()
+            
+            return JsonResponse({
+                'success': True,
+                'session_id': session_id,
+                'chunks': chunks,
+                'total_chunks': len(chunks)
+            })
+        else:
+            return JsonResponse({'error': 'Kafka not connected'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# Add to urls.py:
+# path('api/kafka-chunks/<str:session_id>/', views.get_kafka_chunks_direct, name='get_kafka_chunks_direct'),
+                `;
+                
+                debugLog(`📝 Backend code needed:`, 'warning');
+                debugLog(customEndpointCode, 'info');
+                
+                // Try the endpoint (if it exists)
+                await tryCustomEndpoint(sessionId);
+                
+            } catch (error) {
+                debugLog(`❌ Backend proxy failed: ${error.message}`, 'error');
+                // Fall back to manual chunk reconstruction
+                await manualChunkReconstruction(sessionId);
+            }
+        }
+
+        // Try custom endpoint
+        async function tryCustomEndpoint(sessionId) {
+            debugLog(`🔗 Trying custom endpoint: /interview/api/kafka-chunks/${sessionId}/`, 'info');
+            
+            try {
+                const response = await fetch(`/interview/api/kafka-chunks/${sessionId}/`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.success && data.chunks) {
+                        debugLog(`✅ Received ${data.chunks.length} chunks!`, 'success');
+                        
+                        videoChunks = data.chunks.sort((a, b) => a.chunk_number - b.chunk_number);
+                        
+                        const totalSize = videoChunks.reduce((sum, chunk) => sum + (chunk.chunk_size || 0), 0);
+                        updateStatus(true, videoChunks.length, '-', totalSize);
+                        
+                        // Enable controls
+                        document.getElementById('streamBtn').disabled = false;
+                        document.getElementById('nextBtn').disabled = false;
+                        document.getElementById('downloadBtn').disabled = false;
+                        
+                        // Display chunks
+                        displayChunksList();
+                        
+                        debugLog(`🎉 Ready to stream! Click "Start Stream" to begin.`, 'success');
+                        
+                    } else {
+                        throw new Error('No chunks in response');
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: Custom endpoint not found`);
+                }
+                
+            } catch (error) {
+                debugLog(`❌ Custom endpoint failed: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        // Manual chunk reconstruction (last resort)
+        async function manualChunkReconstruction(sessionId) {
+            debugLog(`🔧 Attempting manual chunk reconstruction...`, 'warning');
+            
+            const pythonScript = `
+# Save this as fetch_kafka_chunks.py and run on your server
+import json
+import base64
+from utils.kafka_client import KafkaFrameClient
+
+def fetch_chunks_for_session(session_id):
+    try:
+        kafka_client = KafkaFrameClient()
+        
+        if kafka_client.is_connected():
+            chunks = kafka_client.get_video_chunks(session_id)
+            kafka_client.close()
+            
+            # Save chunks to a JSON file
+            with open(f'chunks_{session_id}.json', 'w') as f:
+                json.dump(chunks, f, indent=2)
+            
+            print(f"✅ Saved {len(chunks)} chunks to chunks_{session_id}.json")
+            return chunks
+        else:
+            print("❌ Kafka not connected")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return None
+
+if __name__ == "__main__":
+    session_id = "${sessionId}"
+    chunks = fetch_chunks_for_session(session_id)
+            `;
+            
+            debugLog(`📝 Manual script to run on your server:`, 'info');
+            debugLog(pythonScript, 'warning');
+            
+            // Provide instructions
+            const instructions = `
+🛠️ MANUAL STEPS TO GET YOUR VIDEO WORKING:
+
+1. SSH into your server (server2)
+2. Go to your Django project directory
+3. Create file: nano fetch_kafka_chunks.py
+4. Paste the Python script above
+5. Run: python fetch_kafka_chunks.py
+6. This will create: chunks_${sessionId}.json
+7. Upload this file to a web-accessible location
+8. Use the file URL in the input below
+            `;
+            
+            debugLog(instructions, 'warning');
+            
+            // Show file upload option
+            showManualFileUpload();
+        }
+
+        // Show manual file upload option
+        function showManualFileUpload() {
+            const uploadHtml = `
+                <div class="mt-4 p-4 bg-yellow-900 border border-yellow-600 rounded">
+                    <h4 class="font-semibold text-yellow-200 mb-2">📁 Manual Chunk File Upload</h4>
+                    <div class="flex items-center space-x-4">
+                        <input type="file" id="chunkFile" accept=".json" 
+                               class="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-white">
+                        <button onclick="loadChunkFile()" 
+                                class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded">
+                            📂 Load Chunks
+                        </button>
+                    </div>
+                    <p class="text-sm text-yellow-300 mt-2">
+                        Upload the chunks_*.json file created by the Python script
+                    </p>
+                </div>
+            `;
+            
+            const container = document.querySelector('.bg-gray-700:last-of-type');
+            container.innerHTML += uploadHtml;
+        }
+
+        // Load chunks from uploaded file
+        async function loadChunkFile() {
+            const fileInput = document.getElementById('chunkFile');
+            
+            if (!fileInput.files[0]) {
+                debugLog('❌ Please select a chunk file first', 'error');
+                return;
+            }
+            
+            try {
+                const file = fileInput.files[0];
+                const text = await file.text();
+                const chunks = JSON.parse(text);
+                
+                debugLog(`📂 Loaded ${chunks.length} chunks from file`, 'success');
+                
+                videoChunks = chunks.sort((a, b) => a.chunk_number - b.chunk_number);
+                
+                const totalSize = videoChunks.reduce((sum, chunk) => sum + (chunk.chunk_size || 0), 0);
+                updateStatus(true, videoChunks.length, '-', totalSize);
+                
+                // Enable controls including both diagnostic buttons
+                document.getElementById('streamBtn').disabled = false;
+                document.getElementById('nextBtn').disabled = false;
+                document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('diagnoseBtn').disabled = false;
+                document.getElementById('backendFixBtn').disabled = false;
+                
+                displayChunksList();
+                
+                debugLog(`🎉 File loaded successfully! Ready to stream.`, 'success');
+                
+            } catch (error) {
+                debugLog(`❌ Failed to load chunk file: ${error.message}`, 'error');
+            }
+        }
+
+        // Display chunks list
+        function displayChunksList() {
+            const container = document.getElementById('chunksList');
+            
+            if (videoChunks.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-4">No chunks loaded</p>';
+                return;
+            }
+            
+            container.innerHTML = videoChunks.slice(0, 10).map((chunk, index) => `
+                <div class="flex items-center justify-between p-2 rounded bg-gray-600 mb-2">
+                    <div>
+                        <span class="font-medium">Chunk ${chunk.chunk_number}</span>
+                        <span class="text-sm text-gray-300 ml-2">
+                            ${(chunk.chunk_size / 1024).toFixed(1)} KB
+                        </span>
+                    </div>
+                    <button onclick="playSpecificChunk(${index})" 
+                            class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm">
+                        ▶️ Play
+                    </button>
+                </div>
+            `).join('') + (videoChunks.length > 10 ? `<p class="text-gray-400 text-center">... and ${videoChunks.length - 10} more</p>` : '');
+        }
+
+        // Streaming functions
+        async function startStreaming() {
+            if (videoChunks.length === 0) {
+                debugLog('❌ No chunks available for streaming', 'error');
+                return;
+            }
+            
+            isStreaming = true;
+            currentChunkIndex = 0;
+            
+            document.getElementById('streamBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            
+            debugLog('▶️ Starting chunk-by-chunk streaming...', 'success');
+            
+            // Start streaming chunks
+            streamInterval = setInterval(playNextChunkAuto, 3000); // 3 seconds per chunk
+            
+            // Play first chunk immediately
+            await playSpecificChunk(0);
+        }
+
+        function pauseStreaming() {
+            isStreaming = false;
+            
+            if (streamInterval) {
+                clearInterval(streamInterval);
+                streamInterval = null;
+            }
+            
+            document.getElementById('streamBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            
+            debugLog('⏸️ Streaming paused', 'warning');
+        }
+
+        async function playNextChunkAuto() {
+            if (!isStreaming || currentChunkIndex >= videoChunks.length - 1) {
+                pauseStreaming();
+                debugLog('🎬 Streaming completed', 'success');
+                return;
+            }
+            
+            currentChunkIndex++;
+            await playSpecificChunk(currentChunkIndex);
+        }
+
+        async function playNextChunk() {
+            if (currentChunkIndex < videoChunks.length - 1) {
+                currentChunkIndex++;
+                await playSpecificChunk(currentChunkIndex);
+            }
+        }
+
+        // ENHANCED: Play specific chunk with better error handling and debugging
+        async function playSpecificChunk(index) {
+            if (index < 0 || index >= videoChunks.length) return;
+            
+            const chunk = videoChunks[index];
+            currentChunkIndex = index;
+            
+            try {
+                debugLog(`▶️ Playing chunk ${chunk.chunk_number} (${(chunk.chunk_size / 1024).toFixed(1)} KB)`, 'info');
+                
+                // Debug: Check the video_data format
+                const videoDataStr = chunk.video_data;
+                debugLog(`🔍 Video data type: ${typeof videoDataStr}, length: ${videoDataStr.length}`, 'info');
+                debugLog(`🔍 First 50 chars: ${videoDataStr.substring(0, 50)}`, 'info');
+                debugLog(`🔍 Last 50 chars: ${videoDataStr.substring(videoDataStr.length - 50)}`, 'info');
+                
+                // Try multiple decoding approaches
+                let videoData = null;
+                let decodingMethod = '';
+                
+                // Method 1: Direct base64 decode
+                try {
+                    videoData = base64ToArrayBuffer(videoDataStr);
+                    decodingMethod = 'Direct base64';
+                    debugLog(`✅ Method 1 success: ${decodingMethod}`, 'success');
+                } catch (error) {
+                    debugLog(`❌ Method 1 failed: ${error.message}`, 'warning');
+                }
+                
+                // Method 2: Try as raw binary string
+                if (!videoData) {
+                    try {
+                        const bytes = new Uint8Array(videoDataStr.length);
+                        for (let i = 0; i < videoDataStr.length; i++) {
+                            bytes[i] = videoDataStr.charCodeAt(i);
+                        }
+                        videoData = bytes.buffer;
+                        decodingMethod = 'Raw binary';
+                        debugLog(`✅ Method 2 success: ${decodingMethod}`, 'success');
+                    } catch (error) {
+                        debugLog(`❌ Method 2 failed: ${error.message}`, 'warning');
+                    }
+                }
+                
+                // Method 3: Try URL decoding first
+                if (!videoData) {
+                    try {
+                        const decodedStr = decodeURIComponent(videoDataStr);
+                        videoData = base64ToArrayBuffer(decodedStr);
+                        decodingMethod = 'URL + base64';
+                        debugLog(`✅ Method 3 success: ${decodingMethod}`, 'success');
+                    } catch (error) {
+                        debugLog(`❌ Method 3 failed: ${error.message}`, 'warning');
+                    }
+                }
+                
+                // Method 4: Try hex decoding
+                if (!videoData) {
+                    try {
+                        if (/^[0-9a-fA-F]+$/.test(videoDataStr)) {
+                            const bytes = new Uint8Array(videoDataStr.length / 2);
+                            for (let i = 0; i < videoDataStr.length; i += 2) {
+                                bytes[i / 2] = parseInt(videoDataStr.substr(i, 2), 16);
+                            }
+                            videoData = bytes.buffer;
+                            decodingMethod = 'Hex';
+                            debugLog(`✅ Method 4 success: ${decodingMethod}`, 'success');
+                        }
+                    } catch (error) {
+                        debugLog(`❌ Method 4 failed: ${error.message}`, 'warning');
+                    }
+                }
+                
+                if (!videoData) {
+                    throw new Error('All decoding methods failed');
+                }
+                
+                // Create blob with proper MIME type
+                const mimeType = chunk.mime_type || 'video/webm';
+                const blob = new Blob([videoData], { type: mimeType });
+                
+                debugLog(`📦 Created blob: ${(blob.size / 1024).toFixed(1)} KB, type: ${mimeType}`, 'info');
+                debugLog(`🔧 Decoding method used: ${decodingMethod}`, 'info');
+                
+                // Create object URL and play
+                const videoUrl = URL.createObjectURL(blob);
+                const video = document.getElementById('videoPlayer');
+                
+                // Add event listeners to debug video loading
+                video.onloadstart = () => debugLog(`📺 Video loading started for chunk ${chunk.chunk_number}`, 'info');
+                video.onloadeddata = () => debugLog(`✅ Video data loaded for chunk ${chunk.chunk_number}`, 'success');
+                video.onerror = (e) => debugLog(`❌ Video error for chunk ${chunk.chunk_number}: ${e.target.error?.message || 'Unknown'}`, 'error');
+                
+                video.src = videoUrl;
+                
+                // Update UI
+                updateStatus(true, videoChunks.length, chunk.chunk_number, 
+                    videoChunks.reduce((sum, c) => sum + (c.chunk_size || 0), 0));
+                
+                // Update progress
+                const progress = ((index + 1) / videoChunks.length) * 100;
+                document.getElementById('progressBar').style.width = `${progress}%`;
+                document.getElementById('progressText').textContent = `${index + 1}/${videoChunks.length}`;
+                
+                debugLog(`✅ Chunk ${chunk.chunk_number} setup complete`, 'success');
+                
+                // Try to play automatically
+                try {
+                    await video.play();
+                    debugLog(`▶️ Chunk ${chunk.chunk_number} playing`, 'success');
+                } catch (playError) {
+                    debugLog(`⚠️ Autoplay failed for chunk ${chunk.chunk_number}: ${playError.message}`, 'warning');
+                }
+                
+            } catch (error) {
+                debugLog(`❌ Failed to play chunk ${chunk.chunk_number}: ${error.message}`, 'error');
+                
+                // Show diagnostic info
+                debugLog(`🔍 Chunk diagnostic info:`, 'info');
+                debugLog(`   - Chunk number: ${chunk.chunk_number}`, 'info');
+                debugLog(`   - Size: ${chunk.chunk_size} bytes`, 'info');
+                debugLog(`   - MIME type: ${chunk.mime_type}`, 'info');
+                debugLog(`   - Timestamp: ${chunk.timestamp}`, 'info');
+                
+                // Try to skip to next chunk if streaming
+                if (isStreaming) {
+                    debugLog(`⏭️ Skipping to next chunk due to error`, 'warning');
+                    setTimeout(() => playNextChunkAuto(), 1000);
+                }
+            }
+        }
+
+        // Download all chunks as single video
+        async function downloadAllChunks() {
+            if (videoChunks.length === 0) {
+                debugLog('❌ No chunks to download', 'error');
+                return;
+            }
+            
+            debugLog('💾 Combining all chunks for download...', 'info');
+            
+            try {
+                const combinedBuffers = [];
+                
+                for (const chunk of videoChunks) {
+                    const videoData = base64ToArrayBuffer(chunk.video_data);
+                    combinedBuffers.push(videoData);
+                }
+                
+                const combinedBlob = new Blob(combinedBuffers, { type: 'video/webm' });
+                
+                // Download
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(combinedBlob);
+                a.download = `kafka_video_${document.getElementById('sessionId').value}.webm`;
+                a.click();
+                
+                debugLog(`💾 Downloaded combined video (${(combinedBlob.size / 1024 / 1024).toFixed(2)} MB)`, 'success');
+                
+            } catch (error) {
+                debugLog(`❌ Download failed: ${error.message}`, 'error');
+            }
+        }
+
+        // FIXED: Enhanced base64 decoding with error handling
+        function base64ToArrayBuffer(base64) {
+            try {
+                // Clean the base64 string
+                let cleanBase64 = base64;
+                
+                // Remove data URL prefix if present (e.g., "data:video/webm;base64,")
+                if (cleanBase64.includes(',')) {
+                    cleanBase64 = cleanBase64.split(',')[1];
+                }
+                
+                // Remove whitespace and newlines
+                cleanBase64 = cleanBase64.replace(/\s/g, '');
+                
+                // Add padding if needed
+                const missingPadding = cleanBase64.length % 4;
+                if (missingPadding) {
+                    cleanBase64 += '='.repeat(4 - missingPadding);
+                }
+                
+                // Validate base64 format
+                if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleanBase64)) {
+                    throw new Error('Invalid base64 format');
+                }
+                
+                // Decode
+                const binaryString = atob(cleanBase64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+                
+            } catch (error) {
+                debugLog(`❌ Base64 decode error: ${error.message}`, 'error');
+                debugLog(`🔍 First 100 chars: ${base64.substring(0, 100)}`, 'warning');
+                throw new Error(`Base64 decode failed: ${error.message}`);
+            }
+        }
+
+        // ENHANCED: Diagnose chunk data format and find the real problem
+        function diagnoseChunk() {
+            if (videoChunks.length === 0) {
+                debugLog('❌ No chunks to diagnose', 'error');
+                return;
+            }
+            
+            const chunk = videoChunks[currentChunkIndex] || videoChunks[0];
+            
+            debugLog(`🔍 DIAGNOSING CHUNK ${chunk.chunk_number}`, 'warning');
+            debugLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'warning');
+            
+            // Basic info
+            debugLog(`📊 Basic Info:`, 'info');
+            debugLog(`   - Chunk Number: ${chunk.chunk_number}`, 'info');
+            debugLog(`   - Reported Size: ${chunk.chunk_size} bytes (${(chunk.chunk_size / 1024).toFixed(1)} KB)`, 'info');
+            debugLog(`   - MIME Type: ${chunk.mime_type}`, 'info');
+            debugLog(`   - Timestamp: ${chunk.timestamp}`, 'info');
+            
+            // Show all chunk properties
+            debugLog(`🔧 Complete Chunk Object:`, 'info');
+            const chunkKeys = Object.keys(chunk);
+            chunkKeys.forEach(key => {
+                const value = chunk[key];
+                if (typeof value === 'string') {
+                    debugLog(`   - ${key}: "${value.substring(0, 100)}${value.length > 100 ? '...' : ''}" (${value.length} chars)`, 'info');
+                } else {
+                    debugLog(`   - ${key}: ${JSON.stringify(value)}`, 'info');
+                }
+            });
+            
+            // Video data analysis
+            const videoData = chunk.video_data;
+            debugLog(`📺 Video Data Analysis:`, 'error');
+            debugLog(`   - Type: ${typeof videoData}`, 'error');
+            debugLog(`   - Length: ${videoData.length} characters`, 'error');
+            debugLog(`   - Content: "${videoData}"`, 'error');
+            
+            // CRITICAL ISSUE DETECTED
+            if (videoData === 'opus;base64' || videoData.length < 100) {
+                debugLog(`🚨 CRITICAL ISSUE DETECTED:`, 'error');
+                debugLog(`   - video_data contains only: "${videoData}"`, 'error');
+                debugLog(`   - This is NOT actual video data!`, 'error');
+                debugLog(`   - Expected: Long base64 string (thousands of characters)`, 'error');
+                debugLog(`   - Actual: Short format string (${videoData.length} characters)`, 'error');
+                
+                debugLog(`🔧 ROOT CAUSE ANALYSIS:`, 'warning');
+                debugLog(`   - Your Kafka chunks are missing the actual video data`, 'warning');
+                debugLog(`   - The 'video_data' field contains only format info`, 'warning');
+                debugLog(`   - This is a backend storage issue, not a frontend decoding issue`, 'warning');
+                
+                debugLog(`💡 SOLUTIONS:`, 'success');
+                debugLog(`   1. Check your Django video recording code`, 'success');
+                debugLog(`   2. Verify KafkaFrameClient.send_video_chunk() function`, 'success');
+                debugLog(`   3. Check if base64 encoding happens before Kafka storage`, 'success');
+                debugLog(`   4. Test with a single chunk to see what's actually stored`, 'success');
+                
+                // Show what the data SHOULD look like
+                debugLog(`📋 Expected Video Data Format:`, 'info');
+                debugLog(`   video_data: "UklGRjIAAABXRUJQVlA4ICYAAACyAgCdASoBAAEALm..." (thousands of chars)`, 'info');
+                debugLog(`   - Should start with valid base64 characters`, 'info');
+                debugLog(`   - Should be thousands of characters long`, 'info');
+                debugLog(`   - Should decode to actual video bytes`, 'info');
+                
+                return;
+            }
+            
+            // If we get here, analyze the actual video data
+            debugLog(`🔍 Format Detection:`, 'info');
+            
+            // Check if it's base64
+            const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+            const isBase64 = base64Regex.test(videoData.replace(/\s/g, ''));
+            debugLog(`   - Valid Base64: ${isBase64}`, isBase64 ? 'success' : 'error');
+            
+            // Check if it's hex
+            const hexRegex = /^[0-9a-fA-F]+$/;
+            const isHex = hexRegex.test(videoData);
+            debugLog(`   - Valid Hex: ${isHex}`, isHex ? 'success' : 'info');
+            
+            debugLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'warning');
+        }
+        
+        // NEW: Show backend fix instructions
+        function showBackendFix() {
+            debugLog(`🛠️ BACKEND FIX NEEDED:`, 'error');
+            debugLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'error');
+            
+            const backendFix = `
+🔧 Your Django KafkaFrameClient needs fixing:
+
+1. CHECK send_video_chunk() method:
+   - Ensure video_data_b64 parameter contains ACTUAL base64 data
+   - NOT just the MIME type string
+
+2. CHECK your frontend video recording:
+   - Verify convertBlobToBase64() returns full base64 string
+   - Log the base64 string length before sending to backend
+
+3. ADD DEBUG LOGGING in utils/kafka_client.py:
+   
+   def send_video_chunk(self, session_id, chunk_number, video_data_b64, ...):
+       # ADD THIS DEBUG LOG:
+       print(f"DEBUG: Sending chunk {chunk_number}")
+       print(f"DEBUG: video_data_b64 length: {len(video_data_b64)}")
+       print(f"DEBUG: video_data_b64 first 100 chars: {video_data_b64[:100]}")
+       
+       video_message = {
+           'type': 'video_chunk',
+           'session_id': session_id,
+           'chunk_number': chunk_number,
+           'video_data': video_data_b64,  # ← This should be FULL base64, not just "opus;base64"
+           ...
+       }
+
+4. TEST with console.log in your frontend:
+   Before sending to backend, add:
+   console.log("Chunk size:", videoChunk.size);
+   console.log("Base64 length:", base64Video.length);
+   console.log("Base64 sample:", base64Video.substring(0, 100));
+            `;
+            
+            debugLog(backendFix, 'warning');
+            debugLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'error');
+        }
+    </script>
+</body>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mock Interview Platform{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        /* Custom styles for the gradient background */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        /* Card hover effect */
+        .card-hover {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    {% if messages %}
+        <div class="fixed top-4 right-4 z-50 space-y-2">
+            {% for message in messages %}
+                <div class="p-4 rounded-lg shadow-md text-white 
+                    {% if message.tags == 'success' %}bg-green-500
+                    {% elif message.tags == 'error' %}bg-red-500
+                    {% elif message.tags == 'info' %}bg-blue-500
+                    {% elif message.tags == 'warning' %}bg-yellow-500
+                    {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.2/dist/alpine.min.js" defer></script>
+    <script>
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        
+        // Set up default headers for fetch requests
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            // Add CSRF token to POST requests
+//            if (!options.method || options.method.toLowerCase() === 'post') {
+ //              options.headers = options.headers || {};
+  //            if (!options.headers['X-CSRFToken'] && window.csrfToken) {
+   //               options.headers['X-CSRFToken'] = window.csrfToken;
+    //          }
+     //       }
+	    options.credentials = 'include';
+            return originalFetch(url, options);
+        };
+
+        // Helper function for notifications
+        function showNotification(message, type = 'info') {
+            let notificationContainer = document.querySelector('.fixed.top-4.right-4');
+            if (!notificationContainer) {
+                // Create container if it doesn't exist
+                const body = document.querySelector('body');
+                const newContainer = document.createElement('div');
+                newContainer.className = 'fixed top-4 right-4 z-50 space-y-2';
+                body.appendChild(newContainer);
+                notificationContainer = newContainer;
+            }
+
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = `p-4 rounded-lg shadow-md text-white ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
+                type === 'info' ? 'bg-blue-500' :
+                'bg-gray-500'
+            }`;
+            notificationDiv.textContent = message;
+
+            notificationContainer.appendChild(notificationDiv);
+
+            setTimeout(() => {
+                notificationDiv.remove();
+            }, 3000);
+        }
+    </script>
+
+
+</body>
+</html>

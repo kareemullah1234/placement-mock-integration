@@ -1,0 +1,6 @@
+numpy==1.23.5
+flask==2.3.0
+mysql-connector-python==8.1.0
+hdfs==2.7.0
+SpeechRecognition==3.10.0
+python-dotenv
