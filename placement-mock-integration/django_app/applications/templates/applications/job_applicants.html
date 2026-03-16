@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Applicants</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+
+h2{
+    text-align:center;
+    color:#2c3e50;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.applicant-card{
+    background:white;
+    padding:18px;
+    margin-top:15px;
+    border-radius:8px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.applicant-info p{
+    margin:5px 0;
+    color:#444;
+}
+
+.status{
+    font-weight:bold;
+    color:#2980b9;
+}
+
+.date{
+    font-size:13px;
+    color:gray;
+}
+
+.empty{
+    text-align:center;
+    margin-top:40px;
+    color:gray;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Applicants for {{job.title}}</h2>
+
+{% for app in applications %}
+
+<div class="applicant-card">
+
+<div class="applicant-info">
+
+<p><b>Candidate:</b> {{app.candidate.user.username}}</p>
+
+<p class="status"><b>Status:</b> {{app.status}}</p>
+
+<p class="date"><b>Applied:</b> {{app.applied_at}}</p>
+
+</div>
+
+</div>
+
+{% empty %}
+
+<p class="empty">No applicants yet.</p>
+
+{% endfor %}
+
+</div>
+
+</body>
+</html>

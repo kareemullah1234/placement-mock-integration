@@ -1,0 +1,16 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<div class="container">
+
+<h2>Upload Resume</h2>
+<p>Applying for: {{ job.title }}</p>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <input type="file" name="resume" required>
+    <button type="submit">Upload</button>
+
+</form>
+</div>

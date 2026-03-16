@@ -1,0 +1,38 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<div class="container"></div>
+
+<h2>My Posted Jobs</h2>
+
+{% for job in jobs %}
+
+<div style="border:1px solid #ccc; padding:15px; margin:10px">
+
+    <h3>{{ job.title }}</h3>
+
+    <p>{{ job.description }}</p>
+
+    <p><b>Skills:</b> {{ job.skills }}</p>
+
+    <p><b>Salary:</b> {{ job.salary }}</p>
+
+    <p>
+        Status:
+        {% if job.is_active %}
+            Approved
+        {% else %}
+            Waiting for Admin Approval
+        {% endif %}
+    </p>
+
+</div>
+
+{% empty %}
+
+<p>No jobs posted yet.</p>
+
+{% endfor %}
+
+</div>

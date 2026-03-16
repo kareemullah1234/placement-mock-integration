@@ -1,0 +1,189 @@
+version: '3.9'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INTEGRATED APP — PlacementPortal + Mock Interview Audio API
+#
+# HOW TO RUN (from WSL, inside /mnt/e/DOCKER_NOTES/internal_project/integrated_app):
+#   docker compose up --build
+#
+# Code is volume-mounted from the real source dirs → edit locally, see it live.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ───────────────────────── DJANGO (PlacementPortal) ──────────────────────
+  web:
+    build:
+      context: ./django_app
+      dockerfile: Dockerfile
+    container_name: placement_portal_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      # Mount the entire PlacementPortal source → /app inside container
+      # Any code change locally is reflected immediately (hot reload via runserver)
+      - ./django_app:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DJANGO_SETTINGS_MODULE=PlacementPortal.settings
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      namenode:
+        condition: service_started
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # ───────────────────────── FLASK AUDIO ANALYSIS API ──────────────────────
+  audio_api:
+    build:
+      context: ./audio_api
+      dockerfile: Dockerfile
+    container_name: mock_interview_audio_api
+    volumes:
+      # Mount the Flask audio API source → /app (live code edits)
+      - ./audio_api:/app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+      namenode:
+        condition: service_started
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # ─────────────────────────────── MYSQL ───────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: placement_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # ─────────────────────────── ZOOKEEPER (Kafka dep) ───────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: placement_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # ────────────────────────────── KAFKA ────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: placement_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Internal (container-to-container): kafka:9092
+      # External (host machine):           localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_MESSAGE_MAX_BYTES: 10485760        # 10MB max message size (for video frames)
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 10485760
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # ──────────────────────────── HDFS NAMENODE ──────────────────────────────
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: placement_namenode
+    ports:
+      - "9870:9870"    # WebUI
+      - "9000:9000"    # HDFS RPC
+    environment:
+      - CLUSTER_NAME=placement_cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+      - HDFS_CONF_dfs_namenode_name_dir=file:///hadoop/dfs/name
+      - HDFS_CONF_dfs_permissions_enabled=false
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # ──────────────────────────── HDFS DATANODE ──────────────────────────────
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: placement_datanode
+    depends_on:
+      - namenode
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+      - HDFS_CONF_dfs_datanode_data_dir=file:///hadoop/dfs/data
+      - HDFS_CONF_dfs_permissions_enabled=false
+      - SERVICE_PRECONDITION=namenode:9870
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # ────────────────────────────── NGINX ────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: placement_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./django_app/static:/static:ro
+    depends_on:
+      - web
+      - audio_api
+    networks:
+      - app_network
+    restart: unless-stopped
+
+# ──────────────────────────── NAMED VOLUMES ──────────────────────────────────
+volumes:
+  mysql_data:
+  hadoop_namenode:
+  hadoop_datanode:
+
+# ─────────────────────────────── NETWORKS ────────────────────────────────────
+networks:
+  app_network:
+    driver: bridge

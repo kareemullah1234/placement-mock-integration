@@ -1,0 +1,7 @@
+opencv-python
+dlib
+numpy
+flask
+scipy
+mysql-connector-python
+kafka-python

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<head>
+    <title>Login</title>
+    <style>
+        body{
+            font-family: Arial;
+            background:#f4f4f4;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }    .login-container{
+        background:white;
+        padding:30px;
+        border-radius:10px;
+        width:350px;
+        box-shadow:0px 0px 10px rgba(0,0,0,0.1);
+    }
+
+    h2{
+        text-align:center;
+    }
+
+    input{
+        width:100%;
+        padding:10px;
+        margin-top:10px;
+        border:1px solid #ccc;
+        border-radius:5px;
+    }
+
+    button{
+        width:100%;
+        padding:10px;
+        margin-top:15px;
+        background:#4CAF50;
+        color:white;
+        border:none;
+        border-radius:5px;
+        cursor:pointer;
+    }
+
+    button:hover{
+        background:#45a049;
+    }
+
+    .register-link{
+        text-align:center;
+        margin-top:10px;
+    }
+</style>
+
+</head><body><div class="login-container"><h2>Candidate Login</h2><form method="post">
+{% csrf_token %}<label>Username</label>
+<input type="text" name="username" required>
+
+<label>Password</label>
+<input type="password" name="password" required>
+
+<button type="submit">Login</button>
+
+</form><div class="register-link">
+<p>Don't have an account?</p>
+<a href="{% url 'register' %}">Register Here</a>
+</div></div></body>
+</html>

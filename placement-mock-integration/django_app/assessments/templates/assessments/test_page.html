@@ -1,0 +1,29 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<div class="container">
+<form method="post" action="{% url 'submit_test' application_id %}">
+{% csrf_token %}
+
+{% for q in questions %}
+
+<p><b>{{ q.question }}</b></p>
+
+{% for option in q.options %}
+
+<label>
+<input type="radio" name="q{{ forloop.parentloop.counter0 }}" value="{{ option }}">
+{{ option }}
+</label><br>
+
+{% endfor %}
+
+<br>
+
+{% endfor %}
+
+<button type="submit">Submit Test</button>
+
+</form>
+</div>

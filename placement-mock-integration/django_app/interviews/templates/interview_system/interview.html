@@ -1,0 +1,2552 @@
+{% extends 'base.html' %}
+
+{% block title %}Interview Session{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 text-white" id="interviewContainer">
+ <div class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center" id="proctoringModal" style="display: none;">
+  <div class="bg-gray-800 p-8 rounded-lg max-w-md text-center border-2 border-red-500">
+   <div class="text-red-500 mb-4">
+    <i class="fas fa-exclamation-triangle text-4xl">
+    </i>
+   </div>
+   <h2 class="text-xl font-bold mb-4 text-red-400">
+    PROCTORING VIOLATION DETECTED!
+   </h2>
+   <p class="mb-4" id="violationMessage">
+    You have switched tabs or minimized the window.
+   </p>
+   <p class="mb-4 text-yellow-400">
+    Violations:
+    <span class="font-bold text-red-400" id="violationCount">
+     1
+    </span>
+    /2
+   </p>
+   <p class="text-sm text-gray-400 mb-6">
+    After 2 violations, your interview will be automatically terminated.
+   </p>
+   <button class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg" id="returnToInterviewBtn">
+    Return to Interview
+   </button>
+  </div>
+ </div>
+ <div class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4" id="fullscreenModal">
+  <div class="bg-gray-800 p-6 rounded-lg max-w-6xl w-full max-h-screen overflow-y-auto text-center">
+   <div class="sticky top-0 bg-gray-800 pb-4 mb-6 border-b border-gray-600">
+    <h2 class="text-3xl font-bold mb-3 text-white">
+     Mock Interview - Ready to Start?
+    </h2>
+    <p class="text-gray-300 mb-4">
+     Please read all instructions below carefully before starting your
+                    interview.
+    </p>
+    <div class="bg-blue-900 border border-blue-600 p-3 rounded text-sm">
+     <p class="text-blue-200">
+      <i class="fas fa-info-circle mr-2">
+      </i>
+      <strong>
+       Scroll down to review all requirements
+      </strong>
+      - You must acknowledge understanding
+                        before starting
+     </p>
+    </div>
+   </div>
+   <div class="space-y-6">
+    <!-- Quick Overview -->
+    <div class="bg-gradient-to-r from-blue-900 to-purple-900 p-6 rounded-lg border border-blue-600">
+     <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+      <i class="fas fa-rocket mr-3">
+      </i>
+      Interview Overview
+     </h3>
+     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+      <div class="bg-black bg-opacity-30 p-3 rounded">
+       <div class="text-2xl font-bold text-blue-300">
+        15
+       </div>
+       <div class="text-sm text-gray-300">
+        Questions
+       </div>
+      </div>
+      <div class="bg-black bg-opacity-30 p-3 rounded">
+       <div class="text-2xl font-bold text-green-300">
+        20-25
+       </div>
+       <div class="text-sm text-gray-300">
+        Minutes
+       </div>
+      </div>
+      <div class="bg-black bg-opacity-30 p-3 rounded">
+       <div class="text-2xl font-bold text-yellow-300">
+        2
+       </div>
+       <div class="text-sm text-gray-300">
+        Max Violations
+       </div>
+      </div>
+      <div class="bg-black bg-opacity-30 p-3 rounded">
+       <div class="text-2xl font-bold text-purple-300">
+        AI
+       </div>
+       <div class="text-sm text-gray-300">
+        Interviewer
+       </div>
+      </div>
+     </div>
+    </div>
+    <!-- Main Instructions Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+     <!-- Proctoring Rules -->
+     <div class="bg-red-900 border border-red-600 p-6 rounded-lg text-left">
+      <h3 class="font-semibold mb-4 text-red-200 text-lg flex items-center">
+       <i class="fas fa-shield-alt mr-2">
+       </i>
+       Proctoring Rules
+      </h3>
+      <ul class="text-sm space-y-2 text-red-100">
+       <li class="flex items-start">
+        <i class="fas fa-expand text-yellow-400 mr-2 mt-1">
+        </i>
+        <span>
+         <strong>
+          Stay in fullscreen mode
+         </strong>
+         - Cannot exit during interview
+        </span>
+       </li>
+       <li class="flex items-start">
+        <i class="fas fa-ban text-yellow-400 mr-2 mt-1">
+        </i>
+        <span>
+         <strong>
+          No tab switching
+         </strong>
+         - Keep interview tab active
+        </span>
+       </li>
+       <li class="flex items-start">
+        <i class="fas fa-window-minimize text-yellow-400 mr-2 mt-1">
+        </i>
+        <span>
+         <strong>
+          No minimizing
+         </strong>
+         - Keep window maximized
+        </span>
+       </li>
+       <li class="flex items-start">
+        <i class="fas fa-exclamation-triangle text-yellow-400 mr-2 mt-1">
+        </i>
+        <span>
+         <strong>
+          Maximum 2 violations
+         </strong>
+         - 3rd violation = termination
+        </span>
+       </li>
+       <li class="flex items-start">
+        <i class="fas fa-eye text-yellow-400 mr-2 mt-1">
+        </i>
+        <span>
+         <strong>
+          Full monitoring active
+         </strong>
+         - All activity recorded
+        </span>
+       </li>
+      </ul>
+     </div>
+     <!-- Interview Instructions -->
+     <div class="bg-green-900 border border-green-600 p-6 rounded-lg text-left">
+      <h3 class="font-semibold mb-4 text-green-200 text-lg flex items-center">
+       <i class="fas fa-list-ol mr-2">
+       </i>
+       AI Voice Interview Process
+      </h3>
+      <div class="space-y-3">
+       <div class="bg-green-800 p-3 rounded border border-green-700">
+        <h4 class="font-medium text-green-200 mb-1">
+         Step 1: Listen
+        </h4>
+        <p class="text-sm text-green-100">
+         • AI interviewer will speak questions to you
+        </p>
+        <p class="text-sm text-green-100">
+         • Questions also appear on screen
+        </p>
+       </div>
+       <div class="bg-green-800 p-3 rounded border border-green-700">
+        <h4 class="font-medium text-green-200 mb-1">
+         Step 2: Speak
+        </h4>
+        <p class="text-sm text-green-100">
+         • Respond naturally using your voice
+        </p>
+        <p class="text-sm text-green-100">
+         • AI detects when you finish speaking
+        </p>
+        <p class="text-sm text-green-100">
+         • Your response is automatically transcribed
+        </p>
+       </div>
+       <div class="bg-green-800 p-3 rounded border border-green-700">
+        <h4 class="font-medium text-green-200 mb-1">
+         Step 3: Continue
+        </h4>
+        <p class="text-sm text-green-100">
+         • AI processes your answer
+        </p>
+        <p class="text-sm text-green-100">
+         • Next question is generated automatically
+        </p>
+       </div>
+       <div class="bg-green-800 p-3 rounded border border-green-700">
+        <h4 class="font-medium text-green-200 mb-1">
+         Step 4: Complete
+        </h4>
+        <p class="text-sm text-green-100">
+         • 15 total questions covering all topics
+        </p>
+        <p class="text-sm text-green-100">
+         • Interview ends automatically
+        </p>
+       </div>
+      </div>
+     </div>
+    </div>
+    <!-- Technical Setup Requirements -->
+    <div class="bg-gray-700 p-6 rounded-lg">
+     <h3 class="font-semibold mb-4 text-blue-400 text-lg flex items-center">
+      <i class="fas fa-cogs mr-2">
+      </i>
+      Technical Requirements &amp; Setup
+     </h3>
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="text-center">
+       <div class="bg-blue-600 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+        <i class="fas fa-camera text-2xl text-white">
+        </i>
+       </div>
+       <h4 class="text-white font-medium mb-1">
+        Camera Access
+       </h4>
+       <p class="text-gray-400 text-sm">
+        Will request permission once
+       </p>
+       <p class="text-gray-400 text-sm">
+        Required for video monitoring
+       </p>
+      </div>
+      <div class="text-center">
+       <div class="bg-green-600 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+        <i class="fas fa-microphone text-2xl text-white">
+        </i>
+       </div>
+       <h4 class="text-white font-medium mb-1">
+        Microphone Access
+       </h4>
+       <p class="text-gray-400 text-sm">
+        Will request permission once
+       </p>
+       <p class="text-gray-400 text-sm">
+        Required for voice responses
+       </p>
+      </div>
+      <div class="text-center">
+       <div class="bg-purple-600 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+        <i class="fas fa-expand-arrows-alt text-2xl text-white">
+        </i>
+       </div>
+       <h4 class="text-white font-medium mb-1">
+        Fullscreen Mode
+       </h4>
+       <p class="text-gray-400 text-sm">
+        Mandatory requirement
+       </p>
+       <p class="text-gray-400 text-sm">
+        Cannot exit during interview
+       </p>
+      </div>
+     </div>
+    </div>
+    <!-- Final Preparation Checklist -->
+    <div class="bg-yellow-900 border border-yellow-600 p-6 rounded-lg">
+     <h3 class="font-semibold mb-4 text-yellow-200 text-lg flex items-center">
+      <i class="fas fa-clipboard-check mr-2">
+      </i>
+      Pre-Interview Checklist
+     </h3>
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+       <h4 class="text-yellow-200 font-medium mb-2">
+        Environment Ready:
+       </h4>
+       <ul class="text-sm text-yellow-100 space-y-1">
+        <li>
+         ✓ Quiet room with no interruptions
+        </li>
+        <li>
+         ✓ Good lighting on face
+        </li>
+        <li>
+         ✓ Stable internet connection
+        </li>
+        <li>
+         ✓ Comfortable seating position
+        </li>
+       </ul>
+      </div>
+      <div>
+       <h4 class="text-yellow-200 font-medium mb-2">
+        Technology Ready:
+       </h4>
+       <ul class="text-sm text-yellow-100 space-y-1">
+        <li>
+         ✓ Camera and microphone tested
+        </li>
+        <li>
+         ✓ Browser updated (Chrome/Firefox)
+        </li>
+        <li>
+         ✓ All other applications closed
+        </li>
+        <li>
+         ✓ Phone on silent mode
+        </li>
+       </ul>
+      </div>
+     </div>
+    </div>
+   </div>
+   <!-- Acknowledgment and Start Section -->
+   <div class="sticky bottom-0 bg-gray-800 pt-6 mt-8 border-t border-gray-600">
+    <div class="bg-red-900 border border-red-600 p-4 rounded-lg mb-4">
+     <h4 class="font-bold text-red-200 mb-2 flex items-center">
+      <i class="fas fa-exclamation-triangle mr-2">
+      </i>
+      Final Checklist - Confirm Before Starting
+     </h4>
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div>
+       <label class="flex items-center text-red-100 cursor-pointer">
+        <input class="mr-2" id="confirmEnvironment" type="checkbox"/>
+        <span>
+         ✓ Quiet environment with good lighting
+        </span>
+       </label>
+       <label class="flex items-center text-red-100 cursor-pointer mt-2">
+        <input class="mr-2" id="confirmTechnology" type="checkbox"/>
+        <span>
+         ✓ Camera, microphone, and internet tested
+        </span>
+       </label>
+      </div>
+      <div>
+       <label class="flex items-center text-red-100 cursor-pointer">
+        <input class="mr-2" id="confirmRules" type="checkbox"/>
+        <span>
+         ✓ Understood all proctoring rules
+        </span>
+       </label>
+       <label class="flex items-center text-red-100 cursor-pointer mt-2">
+        <input class="mr-2" id="confirmProcess" type="checkbox"/>
+        <span>
+         ✓ Ready for AI voice interview
+        </span>
+       </label>
+      </div>
+     </div>
+    </div>
+    <div class="text-center">
+     <button class="bg-gray-500 hover:bg-gray-600 px-8 py-4 rounded-lg font-bold text-lg transition-all duration-300 cursor-not-allowed" disabled="" id="enterFullscreenBtn">
+      <i class="fas fa-lock mr-2">
+      </i>
+      Complete Checklist to Start
+     </button>
+     <p class="text-xs text-gray-400 mt-2">
+      Check all boxes above to enable the start button
+     </p>
+    </div>
+   </div>
+  </div>
+ </div>
+ <div class="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center" id="terminationModal" style="display: none;">
+  <div class="bg-red-800 p-8 rounded-lg max-w-md text-center border-2 border-red-500">
+   <div class="text-red-300 mb-4">
+    <i class="fas fa-ban text-6xl">
+    </i>
+   </div>
+   <h2 class="text-2xl font-bold mb-4 text-red-200">
+    INTERVIEW TERMINATED
+   </h2>
+   <p class="mb-4 text-red-100">
+    Your interview has been automatically terminated due to multiple proctoring
+                violations.
+   </p>
+   <p class="text-sm text-red-200 mb-6">
+    You will be redirected to the dashboard in
+    <span id="redirectTimer">
+     10
+    </span>
+    seconds.
+   </p>
+   <div class="bg-red-700 p-4 rounded-lg text-left">
+    <h4 class="font-semibold mb-2">
+     Violations Detected:
+    </h4>
+    <ul class="text-sm space-y-1" id="violationsList">
+    </ul>
+   </div>
+  </div>
+ </div>
+ <div class="bg-gray-800 border-b border-gray-700 p-4">
+  <div class="max-w-7xl mx-auto flex justify-between items-center">
+   <h1 class="text-2xl font-bold">
+    Mock Interview Session
+   </h1>
+   <div class="flex items-center space-x-4">
+    <div class="text-sm">
+     <span class="text-gray-400">
+      Question:
+     </span>
+     <span id="currentQuestionNumber">
+      0
+     </span>
+     /
+     <span id="totalQuestions">
+      15
+     </span>
+    </div>
+    <div class="text-sm">
+     <span class="text-gray-400">
+      Stage:
+     </span>
+     <span class="capitalize" id="currentStage">
+      preparing
+     </span>
+    </div>
+    <div class="text-sm flex items-center">
+     <span class="text-gray-400 mr-2">
+      Violations:
+     </span>
+     <span class="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border" id="violationCounter">
+      0/2
+     </span>
+    </div>
+    <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200" id="endInterviewBtn">
+     <i class="fas fa-stop mr-2">
+     </i>
+     End Interview
+    </button>
+   </div>
+  </div>
+ </div>
+ <div class="max-w-7xl mx-auto p-6">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   <div class="lg:col-span-2">
+    <div class="bg-gray-800 rounded-lg p-6 card-shadow">
+     <h2 class="text-xl font-semibold mb-4 flex items-center">
+      <i class="fas fa-video mr-2 text-blue-400">
+      </i>
+      Live Video Feed
+      <span class="ml-auto text-sm text-green-400" id="streamStatus">
+       <i class="fas fa-circle mr-1">
+       </i>
+       Streaming to Kafka
+      </span>
+     </h2>
+     <div class="relative">
+      <video autoplay="" class="w-full h-96 bg-black rounded-lg object-cover" id="video" muted="">
+      </video>
+      <div class="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm">
+       <i class="fas fa-circle mr-1">
+       </i>
+       LIVE
+      </div>
+      <div class="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
+       <i class="fas fa-stream mr-1">
+       </i>
+       <span id="frameCount">
+        0
+       </span>
+       frames
+      </div>
+      <div class="absolute bottom-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm">
+       <i class="fas fa-eye mr-1">
+       </i>
+       Proctored
+      </div>
+      <div class="absolute bottom-4 right-4 bg-purple-600 text-white px-3 py-1 rounded-full text-sm">
+       <i class="fas fa-video mr-1">
+       </i>
+       <span id="videoChunkStatus">
+        Recording...
+       </span>
+      </div>
+      <!-- Session ID Display -->
+      <div class="absolute top-16 left-4 bg-gray-800 bg-opacity-75 text-white px-2 py-1 rounded text-xs">
+       <div>
+        Frame ID:
+        <span id="frameSessionDisplay">
+         -
+        </span>
+       </div>
+       <div>
+        Video ID:
+        <span id="videoSessionDisplay">
+         -
+        </span>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="space-y-6">
+    <!-- AI Interviewer Panel (REPLACED QUESTION PLAYER) -->
+    <div class="bg-gray-800 rounded-lg p-6 card-shadow">
+     <h3 class="text-lg font-semibold mb-4 flex items-center">
+      <i class="fas fa-robot mr-2 text-purple-400">
+      </i>
+      AI Interviewer
+     </h3>
+     <!-- AI Status -->
+     <div class="mb-4 p-3 rounded-lg bg-gray-700 border-l-4 border-purple-500">
+      <div class="flex items-center space-x-2">
+       <div class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" id="aiStatusIndicator">
+       </div>
+       <span class="text-sm" id="aiStatusText">
+        Preparing interview...
+       </span>
+      </div>
+     </div>
+     <!-- Current Question Display -->
+     <div class="bg-gray-700 p-4 rounded-lg mb-4 min-h-[100px]" id="questionDisplay">
+      <h4 class="text-purple-400 font-medium mb-2">
+       Current Question:
+      </h4>
+      <p class="text-gray-300 italic" id="currentQuestionText">
+       Click "Start Interview" to begin...
+      </p>
+     </div>
+     <!-- Start Interview Button -->
+     <button class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg transition duration-200 font-medium" id="startVoiceInterviewBtn">
+      <i class="fas fa-play mr-2">
+      </i>
+      Start Interview
+     </button>
+     <!-- Voice Activity Display -->
+     <!-- Voice Activity Display -->
+     <div class="mt-4" id="voiceActivityDisplay">
+      <div class="flex items-center justify-between mb-2">
+       <span class="text-sm text-gray-400">
+        Voice Activity
+       </span>
+       <span class="text-sm text-gray-400" id="voiceActivityStatus">
+        Idle
+       </span>
+      </div>
+      <div class="w-full bg-gray-700 rounded-full h-2 mb-2">
+       <div class="bg-green-500 h-2 rounded-full transition-all duration-100" id="voiceActivityBar" style="width: 0%">
+       </div>
+      </div>
+      <div class="text-xs text-gray-500" id="voiceActivityHint">
+       Click "Start Interview" to begin
+      </div>
+     </div>
+    </div>
+    <!-- AI Voice Response Panel (REPLACED RECORD RESPONSE) -->
+    <div class="bg-gray-800 rounded-lg p-6 card-shadow">
+     <h3 class="text-lg font-semibold mb-4 flex items-center">
+      <i class="fas fa-comments mr-2 text-blue-400">
+      </i>
+      Interview Conversation
+     </h3>
+     <!-- ChatGPT-style conversation display -->
+     <div class="bg-gray-900 rounded-lg p-4 h-80 overflow-y-auto mb-4 border" id="conversationDisplay">
+      <div class="text-gray-400 text-sm text-center py-8 italic">
+       Conversation will appear here once interview starts...
+      </div>
+     </div>
+     <!-- Live Transcript -->
+     <div class="bg-gray-700 p-3 rounded-lg">
+      <h4 class="text-green-400 font-medium text-sm mb-2">
+       Your Response (Live):
+      </h4>
+      <div class="text-gray-300 text-sm min-h-[40px] italic" id="liveTranscript">
+       Your spoken response will appear here...
+      </div>
+     </div>
+    </div>
+    <!-- Progress Panel -->
+    <div class="bg-gray-800 rounded-lg p-6 card-shadow">
+     <h3 class="text-lg font-semibold mb-4 flex items-center">
+      <i class="fas fa-chart-line mr-2 text-yellow-400">
+      </i>
+      Progress
+     </h3>
+     <div class="space-y-3">
+      <div class="flex justify-between text-sm">
+       <span>
+        Completion
+       </span>
+       <span id="completionPercentage">
+        0%
+       </span>
+      </div>
+      <div class="w-full bg-gray-700 rounded-full h-2">
+       <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" id="progressBar" style="width: 0%">
+       </div>
+      </div>
+      <div class="text-xs text-gray-400 space-y-1">
+       <div class="flex justify-between">
+        <span>
+         Voice Responses:
+        </span>
+        <span class="text-green-400" id="voiceResponsesRecorded">
+         0
+        </span>
+       </div>
+       <div class="flex justify-between">
+        <span>
+         Frames Streamed:
+        </span>
+        <span class="text-blue-400" id="framesStreamed">
+         0
+        </span>
+       </div>
+       <div class="flex justify-between">
+        <span>
+         Video Chunks:
+        </span>
+        <span class="text-purple-400" id="videoChunksRecorded">
+         0
+        </span>
+       </div>
+       <div class="flex justify-between">
+        <span>
+         Frame Stream:
+        </span>
+        <span class="text-yellow-400" id="kafkaConnectionStatus">
+         Connecting...
+        </span>
+       </div>
+       <div class="flex justify-between">
+        <span>
+         Video Stream:
+        </span>
+        <span class="text-yellow-400" id="videoStreamStatus">
+         Preparing...
+        </span>
+       </div>
+       <!-- Session Status -->
+       <div class="border-t border-gray-600 pt-2 mt-2">
+        <div class="flex justify-between">
+         <span>
+          Frame Session:
+         </span>
+         <span class="text-blue-400" id="frameSessionStatus">
+          Inactive
+         </span>
+        </div>
+        <div class="flex justify-between">
+         <span>
+          Video Session:
+         </span>
+         <span class="text-purple-400" id="videoSessionStatus">
+          Inactive
+         </span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<style>
+ /* ChatGPT-style conversation messages */
+    .conversation-message {
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        max-width: 90%;
+        word-wrap: break-word;
+    }
+
+    .ai-message {
+        background-color: #374151;
+        border-left: 4px solid #8b5cf6;
+        margin-right: auto;
+    }
+
+    .user-message {
+        background-color: #1f2937;
+        border-left: 4px solid #10b981;
+        margin-left: auto;
+    }
+
+    .message-header {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        opacity: 0.8;
+    }
+
+    .ai-message .message-header {
+        color: #8b5cf6;
+    }
+
+    .user-message .message-header {
+        color: #10b981;
+    }
+
+    /* Voice activity animations */
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.7;
+            transform: scale(1.05);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .ai-speaking {
+        animation: pulse 2s infinite;
+    }
+
+    /* Scrollbar for conversation */
+    #conversationDisplay::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #conversationDisplay::-webkit-scrollbar-track {
+        background: #1f2937;
+        border-radius: 3px;
+    }
+
+    #conversationDisplay::-webkit-scrollbar-thumb {
+        background: #4b5563;
+        border-radius: 3px;
+    }
+
+    /* Custom scrollbar for the modal */
+    #fullscreenModal::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #fullscreenModal::-webkit-scrollbar-track {
+        background: rgba(55, 65, 81, 0.5);
+        border-radius: 4px;
+    }
+
+    #fullscreenModal::-webkit-scrollbar-thumb {
+        background: rgba(96, 165, 250, 0.7);
+        border-radius: 4px;
+    }
+
+    #fullscreenModal::-webkit-scrollbar-thumb:hover {
+        background: rgba(96, 165, 250, 0.9);
+    }
+
+    /* Animation for checkbox validation */
+    #enterFullscreenBtn {
+        transition: all 0.3s ease;
+    }
+
+    #enterFullscreenBtn:disabled {
+        opacity: 0.6;
+        transform: scale(0.98);
+    }
+
+    #enterFullscreenBtn:not(:disabled) {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+</style>
+<script>
+ // Global variables
+    let questionsPlayed = 0;
+    let maxQuestions = 6;
+    let responsesRecorded = 0;
+    let framesStreamed = 0;
+    let currentQuestionKey = null;
+    let currentIndex = 0;
+    let audioFiles = [];
+    let mediaRecorder;
+    let audioChunks = [];
+    let mediaStream = null;
+    let frameSessionId = null;
+    let videoSessionId = null;
+    let kafkaStreaming = false;
+    let streamingInterval = null;
+    let interviewId = null;
+    let proctoringActive = false;
+    let violationCount = 0;
+    let maxViolations = 2;
+    let isFullscreen = false;
+    let hasFocus = true;
+    let proctoringStartTime = null;
+    let violations = [];
+    let interviewTerminated = false;
+
+    // Voice interview variables
+    let voiceInterviewActive = false;
+    let currentQuestionNumber = 0;
+    let totalQuestions = 15;
+    let currentStage = 'preparing';
+    let voiceResponses = [];
+
+    // Voice Interview Manager Class
+    class VoiceInterviewManager {
+        constructor() {
+            this.isActive = false;
+            this.speechSynthesis = window.speechSynthesis;
+            this.currentQuestion = '';
+            this.questionNumber = 0;
+            this.stage = 'preparing';
+            this.responses = [];
+            this.mediaRecorder = null;
+            this.audioChunks = [];
+            this.isRecording = false;
+            this.audioContext = null;
+            this.analyser = null;
+            this.dataArray = null;
+            this.silenceThreshold = 1800;
+            this.silenceTimer = null;
+            this.speechDetected = false;
+            this.lastSpeechTime = null;
+            this.currentAudio = null;
+            this.maxRecordingTime = 20000;
+            this.speechThresholdLevel = 0.02;
+            this.recordingStartTime = null;
+            this.backgroundNoiseLevel = 0;
+            this.isProcessing = false;
+            this.preferredVoice = null;
+            this.pendingSpeechTimeout = null;
+            this.ttsUnlocked = false;
+        }
+
+        async initialize() {
+            try {
+                console.log("Initializing Voice Interview Manager...");
+
+                /* -----------------------------
+                   1️⃣  Initialize Speech Recognition (STT)
+                ------------------------------ */
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+                    this.speechRecognition = new SpeechRecognition();
+                    this.speechRecognition.continuous = false;
+                    this.speechRecognition.interimResults = true;
+                    this.speechRecognition.lang = 'en-US';
+                    this.speechRecognition.maxAlternatives = 1;
+
+                    this.setupSpeechRecognitionEvents();
+                    console.log('✅ Speech Recognition initialized');
+                } else {
+                    throw new Error('Speech Recognition not supported in this browser');
+                }
+
+
+                /* -----------------------------
+                   2️⃣  Initialize Speech Synthesis (TTS)
+                ------------------------------ */
+                if (!('speechSynthesis' in window)) {
+                    throw new Error('Speech Synthesis not supported in this browser');
+                }
+
+                // Attach speechSynthesis to class properly
+                this.speechSynthesis = window.speechSynthesis;
+
+                // Force voice loading
+                await new Promise((resolve) => {
+                    const voices = this.speechSynthesis.getVoices();
+
+                    if (voices.length > 0) {
+                        console.log("✅ Voices already available:", voices.length);
+                        this.preferredVoice = this.selectPreferredVoice(voices);
+                        resolve();
+                    } else {
+                        console.log("⏳ Waiting for voices to load...");
+                        this.speechSynthesis.onvoiceschanged = () => {
+                            const loadedVoices = this.speechSynthesis.getVoices();
+                            console.log("✅ Voices loaded:", loadedVoices.length);
+                            this.preferredVoice = this.selectPreferredVoice(loadedVoices);
+                            resolve();
+                        };
+                    }
+                });
+
+                console.log("🎤 Voice Interview Manager fully initialized");
+                return true;
+
+            } catch (error) {
+                console.error('❌ Voice Interview initialization failed:', error);
+                return false;
+            }
+        }
+
+
+        async waitForVoices() {
+            return new Promise((resolve) => {
+                const checkVoices = () => {
+                    const voices = this.speechSynthesis.getVoices();
+                    if (voices.length > 0) {
+                        this.preferredVoice = this.selectPreferredVoice(voices);
+                        resolve(voices);
+                    } else {
+                        setTimeout(checkVoices, 100);
+                    }
+                };
+
+                if (this.speechSynthesis.onvoiceschanged !== undefined) {
+                    this.speechSynthesis.onvoiceschanged = () => {
+                        const voices = this.speechSynthesis.getVoices();
+                        this.preferredVoice = this.selectPreferredVoice(voices);
+                        resolve(voices);
+                    };
+                }
+
+                checkVoices();
+            });
+        }
+
+        selectPreferredVoice(voices) {
+            return voices.find(voice =>
+                voice.lang && voice.lang.toLowerCase().startsWith('en') &&
+                /google|microsoft|zira|david|mark/i.test(voice.name)
+            ) || voices.find(voice =>
+                voice.lang && voice.lang.toLowerCase().startsWith('en')
+            ) || voices[0] || null;
+        }
+
+        async unlockSpeechSynthesis() {
+            if (!this.speechSynthesis || this.ttsUnlocked) {
+                return;
+            }
+
+            await this.waitForVoices();
+
+            return new Promise((resolve) => {
+                const unlockUtterance = new SpeechSynthesisUtterance(' ');
+                if (this.preferredVoice) {
+                    unlockUtterance.voice = this.preferredVoice;
+                    unlockUtterance.lang = this.preferredVoice.lang || 'en-US';
+                }
+                unlockUtterance.volume = 0;
+                unlockUtterance.rate = 1;
+                unlockUtterance.pitch = 1;
+
+                const finishUnlock = () => {
+                    this.ttsUnlocked = true;
+                    this.speechSynthesis.cancel();
+                    resolve();
+                };
+
+                unlockUtterance.onend = finishUnlock;
+                unlockUtterance.onerror = finishUnlock;
+
+                try {
+                    this.speechSynthesis.cancel();
+                    this.speechSynthesis.resume();
+                    this.speechSynthesis.speak(unlockUtterance);
+                    setTimeout(finishUnlock, 300);
+                } catch (error) {
+                    console.error('Speech synthesis unlock failed:', error);
+                    finishUnlock();
+                }
+            });
+        }
+
+        setupSpeechRecognitionEvents() {
+            let finalTranscript = '';
+
+            this.speechRecognition.onstart = () => {
+                this.updateAIStatus('listening', 'Listening for your response...');
+            };
+
+            this.speechRecognition.onresult = (event) => {
+                let interimTranscript = '';
+                finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                this.updateLiveTranscript(finalTranscript + interimTranscript);
+            };
+
+            this.speechRecognition.onend = () => {
+                if (finalTranscript.trim() && !this.isProcessing) {
+                    this.processVoiceResponse(finalTranscript.trim());
+                } else if (!this.isProcessing && this.isActive) {
+                    setTimeout(() => this.startListening(), 500);
+                }
+            };
+
+            this.speechRecognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'no-speech' && this.isActive) {
+                    setTimeout(() => this.startListening(), 1000);
+                }
+            };
+        }
+
+        async playAIAudio(audioBase64) {
+            try {
+                if (document.documentElement.hasAttribute('data-audio-enabled') === false) {
+                    console.log('Enabling audio after user interaction');
+                    document.documentElement.setAttribute('data-audio-enabled', 'true');
+                }
+
+                this.updateAIStatus('speaking', 'AI is speaking... Please listen');
+                console.log('Starting audio playback...');
+
+                // Convert base64 to audio blob
+                const binaryString = atob(audioBase64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+
+                // Create audio URL and element
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+
+                // Set audio properties
+                audio.volume = 0.8;
+                audio.preload = 'auto';
+
+                return new Promise((resolve, reject) => {
+                    audio.oncanplaythrough = () => {
+                        console.log('Audio ready to play');
+                        audio.play().then(() => {
+                            console.log('Audio playback started successfully');
+                        }).catch(error => {
+                            console.error('Audio play failed:', error);
+                            resolve(); // Still resolve to continue flow
+                        });
+                    };
+
+                    audio.onended = () => {
+                        console.log('Audio playback completed');
+                        URL.revokeObjectURL(audioUrl);
+                        this.updateAIStatus('ready', 'Ready for your response');
+                        resolve();
+                    };
+
+                    audio.onerror = (error) => {
+                        console.error('Audio playback error:', error);
+                        URL.revokeObjectURL(audioUrl);
+                        this.updateAIStatus('ready', 'Audio failed, ready for response');
+                        resolve(); // Continue even if audio fails
+                    };
+
+                    // Fallback timeout
+                    setTimeout(() => {
+                        if (!audio.ended) {
+                            console.warn('Audio timeout, continuing...');
+                            audio.pause();
+                            URL.revokeObjectURL(audioUrl);
+                            resolve();
+                        }
+                    }, 5000);
+                });
+
+            } catch (error) {
+                console.error('Error in playAIAudio:', error);
+                this.updateAIStatus('ready', 'Ready for your response');
+            }
+        }
+
+
+        async startInterview() {
+            try {
+                this.updateAIStatus('loading', 'Starting interview...');
+
+                const response = await fetch('/interview/api/voice/start/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.isActive = true;
+                    this.currentQuestion = result.question;
+                    this.questionNumber = result.question_number;
+                    this.stage = result.stage;
+
+                    this.updateQuestionDisplay(result.question);
+                    this.updateProgressDisplay();
+                    this.addToConversation('ai', result.question, result.question_number);
+
+                    // Play first question audio if available
+                    if (result.has_audio && result.audio_base64) {
+                        console.log('Playing first question audio...');
+                        await this.playAIAudio(result.audio_base64);
+
+                        setTimeout(() => {
+                            this.updateLiveTranscript('Your response...');
+                            this.startListening();
+                        }, 250);
+                    } else {
+                        await this.speakQuestion(result.question);
+
+                        setTimeout(() => {
+                            this.updateLiveTranscript('Your response...');
+                            this.startListening();
+                        }, 250);
+                    }
+
+                    return true;
+                } else {
+                    throw new Error(result.error || 'Failed to start interview');
+                }
+            } catch (error) {
+                console.error('Error starting voice interview:', error);
+                this.updateAIStatus('error', 'Failed to start interview');
+                return false;
+            }
+        }
+
+
+        async processVoiceResponse(response) {
+            if (this.isProcessing) return;
+
+            try {
+                this.isProcessing = true;
+                this.updateAIStatus('processing', 'Processing your response...');
+                this.addToConversation('user', response, this.questionNumber);
+
+                const processResponse = await fetch('/interview/api/voice/process/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ response: response })
+                });
+
+                const result = await processResponse.json();
+
+                if (result.success) {
+
+                    voiceResponses.push({
+                        question_number: this.questionNumber,
+                        response: response,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    this.updateVoiceResponseCounter();
+
+                    if (result.interview_complete) {
+                        this.completeInterview(result.message);
+                    } else {
+
+                        // 🔥 FIXED: Use next_question instead of question
+                        this.currentQuestion = result.next_question;
+                        this.questionNumber = result.question_number;
+                        this.stage = result.stage;
+
+                        this.updateQuestionDisplay(result.next_question);
+                        this.updateProgressDisplay();
+                        this.addToConversation('ai', result.next_question, result.question_number);
+
+                        // 🔥 Play AI generated audio if available
+                        if (result.has_audio && result.audio_base64) {
+                            console.log("Playing next AI audio...");
+                            await this.playAIAudio(result.audio_base64);
+                        } else {
+                            await this.speakQuestion(result.next_question);
+                        }
+
+                        setTimeout(() => this.startListening(), 250);
+                    }
+
+                } else {
+                    throw new Error(result.error || 'Failed to process response');
+                }
+
+            } catch (error) {
+                console.error('Error processing response:', error);
+                this.updateAIStatus('error', 'Error processing response');
+            } finally {
+                this.isProcessing = false;
+            }
+        }
+
+
+        async speakQuestion(question) {
+            return new Promise(async (resolve) => {
+                if (!this.speechSynthesis) {
+                    resolve();
+                    return;
+                }
+
+                if (!this.ttsUnlocked) {
+                    await this.unlockSpeechSynthesis();
+                }
+
+                this.updateAIStatus('speaking', 'Speaking question...');
+                this.speechSynthesis.cancel();
+                this.speechSynthesis.resume();
+
+                const utterance = new SpeechSynthesisUtterance(question);
+                if (!this.preferredVoice) {
+                    await this.waitForVoices();
+                }
+
+                if (this.preferredVoice) {
+                    utterance.voice = this.preferredVoice;
+                }
+
+                utterance.lang = (this.preferredVoice && this.preferredVoice.lang) || 'en-US';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                const finishSpeech = () => {
+                    if (this.pendingSpeechTimeout) {
+                        clearTimeout(this.pendingSpeechTimeout);
+                        this.pendingSpeechTimeout = null;
+                    }
+                    this.updateAIStatus('ready', 'Ready for your response');
+                    resolve();
+                };
+
+                utterance.onstart = () => {
+                    console.log('Browser TTS started');
+                };
+                utterance.onend = () => finishSpeech();
+                utterance.onerror = (error) => {
+                    console.error('TTS error:', error);
+                    finishSpeech();
+                };
+
+                this.pendingSpeechTimeout = setTimeout(() => {
+                    console.warn('Browser TTS timed out, continuing');
+                    this.speechSynthesis.cancel();
+                    finishSpeech();
+                }, Math.max(3000, question.length * 90));
+
+                this.speechSynthesis.speak(utterance);
+            });
+        }
+
+
+        // stopListening remains SAME
+        stopListening() {
+            try {
+                console.log('🛑 Stopping audio recording...');
+
+                if (this.mediaRecorder && this.isRecording) {
+                    this.mediaRecorder.stop();
+                    this.isRecording = false;
+                    console.log('✅ MediaRecorder stopped');
+                }
+
+                if (this.silenceTimer) {
+                    clearTimeout(this.silenceTimer);
+                    this.silenceTimer = null;
+                    console.log('🧹 Silence timer cleared');
+                }
+
+                this.speechDetected = false;
+                this.lastSpeechTime = null;
+
+                this.updateVoiceActivityBar(0);
+                this.updateVoiceStatus('processing', 'Processing your response...');
+
+            } catch (error) {
+                console.error('❌ Error stopping listening:', error);
+            }
+        }
+
+        // ADD this method to your existing VoiceInterviewManager class:
+        updateVoiceStatus(status, message) {
+            const statusElement = document.getElementById('voiceActivityStatus');
+
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
+
+            // Update hints based on status with more specific guidance
+            const hintElement = document.getElementById('voiceActivityHint');
+            if (hintElement) {
+                switch (status) {
+                    case 'listening':
+                        hintElement.textContent = 'Calibrating background noise... Speak clearly when ready';
+                        break;
+                    case 'speaking':
+                        hintElement.textContent = 'Voice detected! Continue speaking naturally';
+                        break;
+                    case 'silence':
+                        hintElement.textContent = 'Natural pause detected - will auto-stop soon';
+                        break;
+                    case 'processing':
+                        hintElement.textContent = 'Processing speech with Gemini AI...';
+                        break;
+                    default:
+                        hintElement.textContent = 'Ready for your response';
+                }
+            }
+        }
+
+        // ADD this method to enhance voice activity feedback:
+        updateVoiceActivityBar(level) {
+            const bar = document.getElementById('voiceActivityBar');
+            const display = document.getElementById('voiceActivityDisplay');
+
+            if (bar) {
+                bar.style.width = `${Math.min(level, 100)}%`;
+
+                if (level > 20) {
+                    display?.classList.add('voice-active');
+                    bar.classList.add('bg-green-500');
+                    bar.classList.remove('bg-gray-500');
+                } else {
+                    display?.classList.remove('voice-active');
+                    bar.classList.add('bg-gray-500');
+                    bar.classList.remove('bg-green-500');
+                }
+            }
+        }
+
+        // REPLACE your existing processRecordedAudio method:
+        async processRecordedAudio() {
+            if (this.audioChunks.length === 0) {
+                console.warn('No audio chunks to process');
+                return;
+            }
+
+            try {
+                this.updateAIStatus('processing', 'Converting speech to text with Gemini...');
+
+                // Create audio blob
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                console.log(`Processing audio blob: ${audioBlob.size} bytes`);
+
+                // Send to server using FormData
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'response.webm');
+
+                const response = await fetch('/interview/api/voice/process/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show transcription
+                    if (result.transcription) {
+                        this.updateLiveTranscript(result.transcription);
+                        this.addToConversation('user', result.transcription, this.questionNumber);
+                        this.updateVoiceResponseCounter();
+                    }
+
+                    if (result.interview_complete) {
+                        this.completeInterview(result.message || 'Interview completed!');
+                    } else if (result.next_question) {
+                        // Update for next question
+                        this.currentQuestion = result.next_question;
+                        this.questionNumber = result.question_number;
+                        this.stage = result.stage;
+
+                        this.updateQuestionDisplay(result.next_question);
+                        this.updateProgressDisplay();
+                        this.addToConversation('ai', result.next_question, result.question_number);
+
+                        // IMPORTANT: Play audio BEFORE starting next listening
+                        if (result.has_audio && (result.audio_base64 || result.next_audio_base64)) {
+                            console.log('Playing AI audio...');
+                            await this.playAIAudio(result.audio_base64 || result.next_audio_base64);
+
+                            setTimeout(() => {
+                                this.updateLiveTranscript('Your response...');
+                                this.startListening();
+                            }, 250);
+                        } else {
+                            setTimeout(() => {
+                                this.updateLiveTranscript('Your response...');
+                                this.startListening();
+                            }, 250);
+                        }
+                    } else {
+                        throw new Error(result.error || 'Processing failed');
+                    }
+                } else {
+                    throw new Error(result.error || 'Processing failed');
+                }
+
+                } catch (error) {
+                    console.error('Error processing audio:', error);
+                    this.updateAIStatus('error', 'Processing failed. Try again.');
+                    setTimeout(() => this.startListening(), 800);
+                }
+            }
+
+
+// REPLACE your existing startListening method with this:
+async startListening() {
+                if (!this.isActive || this.isRecording) return;
+
+                try {
+                    // Reset state
+                    this.audioChunks = [];
+                    this.speechDetected = false;
+                    this.lastSpeechTime = null;
+                    this.recordingStartTime = Date.now(); // ADD THIS LINE
+
+                    if (this.silenceTimer) {
+                        clearTimeout(this.silenceTimer);
+                        this.silenceTimer = null;
+                    }
+
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            sampleRate: 16000
+                        }
+                    });
+
+                    // Initialize audio context for silence detection
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        this.analyser = this.audioContext.createAnalyser();
+                        this.analyser.fftSize = 512; // INCREASED for better frequency analysis
+                        this.analyser.smoothingTimeConstant = 0.3; // ADD smoothing
+                        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                    }
+
+                    // Connect stream to analyser
+                    const source = this.audioContext.createMediaStreamSource(stream);
+                    source.connect(this.analyser);
+
+                    this.mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: 'audio/webm;codecs=opus'
+                    });
+
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            this.audioChunks.push(event.data);
+                        }
+                    };
+
+                    this.mediaRecorder.onstop = () => {
+                        stream.getTracks().forEach(track => track.stop());
+                        this.processRecordedAudio();
+                    };
+
+                    this.mediaRecorder.start(100);
+                    this.isRecording = true;
+
+                    this.updateVoiceStatus('listening', 'Listening... speak now');
+                    this.updateLiveTranscript('Listening for your voice...');
+
+                    // Start enhanced silence detection
+                    this.startSilenceDetection();
+
+                    // Safety timeout
+                    setTimeout(() => {
+                        if (this.isRecording) {
+                            console.log('Maximum recording time reached');
+                            this.stopListening();
+                        }
+                    }, this.maxRecordingTime);
+
+                } catch (error) {
+                    console.error('Error starting recording:', error);
+                    this.updateVoiceStatus('error', 'Microphone access failed');
+                }
+            }
+
+            completeInterview(message) {
+                this.isActive = false;
+                this.addToConversation('ai', message, this.questionNumber + 1);
+                this.updateAIStatus('completed', 'Interview completed!');
+
+                setTimeout(() => {
+                    alert('Interview completed! Thank you for your time.');
+                    document.getElementById('endInterviewBtn').click();
+                }, 2000);
+            }
+
+            startSilenceDetection() {
+                let lastVolumeCheck = Date.now();
+                let speechConfidence = 0;
+                let consecutiveSilenceCount = 0;
+                let backgroundNoiseLevel = 0;
+                let adaptiveThreshold = 15; // Start with base threshold
+
+                const checkAudioLevel = () => {
+                    if (!this.isRecording || !this.analyser) return;
+
+                    // Get current audio data
+                    this.analyser.getByteFrequencyData(this.dataArray);
+
+                    // Calculate RMS (Root Mean Square) for better audio level detection
+                    let sum = 0;
+                    let squares = 0;
+                    for (let i = 0; i < this.dataArray.length; i++) {
+                        sum += this.dataArray[i];
+                        squares += this.dataArray[i] * this.dataArray[i];
+                    }
+
+                    const averageLevel = sum / this.dataArray.length;
+                    const rms = Math.sqrt(squares / this.dataArray.length);
+                    const volumePercent = (rms / 255) * 100;
+
+                    // Dynamic background noise adaptation (first 2 seconds)
+                    const currentTime = Date.now();
+                    const recordingDuration = (currentTime - this.recordingStartTime) / 1000;
+
+                    if (recordingDuration < 0.6 && !this.speechDetected) {
+                        backgroundNoiseLevel = Math.max(backgroundNoiseLevel, averageLevel);
+                        adaptiveThreshold = backgroundNoiseLevel + 18;
+                        console.log(`📊 Calibrating: Background=${backgroundNoiseLevel.toFixed(1)}, Threshold=${adaptiveThreshold.toFixed(1)}`);
+                    }
+
+                    // Update UI with current volume
+                    this.updateVoiceActivityBar(volumePercent);
+
+                    // Enhanced speech detection with confidence scoring
+                    if (rms > adaptiveThreshold) {
+                        // Speech detected
+                        if (!this.speechDetected) {
+                            this.speechDetected = true;
+                            speechConfidence = 0;
+                            consecutiveSilenceCount = 0;
+                            this.updateVoiceStatus('speaking', 'Speech detected... Keep talking');
+                            console.log('🎤 Speech started - RMS:', rms.toFixed(1), 'Threshold:', adaptiveThreshold.toFixed(1));
+                        }
+
+                        // Build confidence in speech detection
+                        speechConfidence = Math.min(speechConfidence + 1, 10);
+                        this.lastSpeechTime = currentTime;
+
+                        // Clear any existing silence timer
+                        if (this.silenceTimer) {
+                            clearTimeout(this.silenceTimer);
+                            this.silenceTimer = null;
+                        }
+                    } else if (this.speechDetected) {
+                        // Silence detected after speech started
+                        const silenceDuration = (currentTime - this.lastSpeechTime) / 1000;
+                        consecutiveSilenceCount++;
+
+                        // More intelligent stopping logic - need both time and confidence
+                        if (!this.silenceTimer &&
+                            speechConfidence > 3 &&
+                            silenceDuration > 0.45 &&
+                            consecutiveSilenceCount > 4) {
+
+                            console.log('🔇 Starting silence timer... Confidence:', speechConfidence, 'Duration:', silenceDuration.toFixed(1));
+                            this.updateVoiceStatus('silence', `Natural pause detected... Will stop in ${this.silenceThreshold / 1000} seconds`);
+
+                            this.silenceTimer = setTimeout(() => {
+                                console.log('⏰ Silence period complete - stopping recording');
+                                this.stopListening();
+                            }, this.silenceThreshold);
+                        }
+
+                        if (silenceDuration > 4.0) {
+                            console.log('⏰ Extended silence - force stopping');
+                            this.stopListening();
+                            return;
+                        }
+                    }
+
+                    // Debug logging every 2 seconds
+                    if (currentTime - lastVolumeCheck > 2000) {
+                        console.log(`🔊 RMS: ${rms.toFixed(1)}, Threshold: ${adaptiveThreshold.toFixed(1)}, Confidence: ${speechConfidence}, Speech: ${this.speechDetected}`);
+                        lastVolumeCheck = currentTime;
+                    }
+
+                    // Continue monitoring
+                    if (this.isRecording) {
+                        requestAnimationFrame(checkAudioLevel);
+                    }
+                };
+
+                // Initialize recording start time for calibration
+                this.recordingStartTime = Date.now();
+                console.log('🎯 Starting enhanced silence detection with background noise rejection');
+                requestAnimationFrame(checkAudioLevel);
+            }
+
+            addToConversation(sender, message, questionNum) {
+                const conversationDisplay = document.getElementById('conversationDisplay');
+                const messageDiv = document.createElement('div');
+
+                messageDiv.className = `conversation-message ${sender}-message`;
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'message-header';
+                headerDiv.textContent = sender === 'ai' ? `AI Interviewer (Q${questionNum})` : `You (Q${questionNum})`;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.textContent = message;
+
+                messageDiv.appendChild(headerDiv);
+                messageDiv.appendChild(contentDiv);
+                conversationDisplay.appendChild(messageDiv);
+
+                conversationDisplay.scrollTop = conversationDisplay.scrollHeight;
+
+                const initialMessage = conversationDisplay.querySelector('.text-gray-400');
+                if (initialMessage) {
+                    initialMessage.remove();
+                }
+            }
+
+            updateQuestionDisplay(question) {
+                const questionElement = document.getElementById('currentQuestionText');
+                if (questionElement) {
+                    questionElement.textContent = question;
+                }
+            }
+
+            updateProgressDisplay() {
+                const questionNumElement = document.getElementById('currentQuestionNumber');
+                if (questionNumElement) {
+                    questionNumElement.textContent = this.questionNumber;
+                }
+
+                const stageElement = document.getElementById('currentStage');
+                if (stageElement) {
+                    stageElement.textContent = this.stage;
+                }
+
+                const progressBar = document.getElementById('progressBar');
+                const progressPercentage = document.getElementById('completionPercentage');
+
+                if (progressBar && progressPercentage) {
+                    const percentage = Math.round((this.questionNumber / totalQuestions) * 100);
+                    progressBar.style.width = `${percentage}%`;
+                    progressPercentage.textContent = `${percentage}%`;
+                }
+            }
+
+            updateVoiceResponseCounter() {
+                const voiceResponseElement = document.getElementById('voiceResponsesRecorded');
+                if (voiceResponseElement) {
+                    voiceResponseElement.textContent = voiceResponses.length;
+                }
+            }
+
+            updateAIStatus(status, message) {
+                const indicator = document.getElementById('aiStatusIndicator');
+                const text = document.getElementById('aiStatusText');
+
+                if (!indicator || !text) return;
+
+                indicator.classList.remove('animate-pulse', 'ai-speaking');
+
+                switch (status) {
+                    case 'loading':
+                        indicator.className = 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
+                        break;
+                    case 'speaking':
+                        indicator.className = 'w-3 h-3 rounded-full bg-purple-500 ai-speaking';
+                        break;
+                    case 'listening':
+                        indicator.className = 'w-3 h-3 rounded-full bg-green-500 animate-pulse';
+                        break;
+                    case 'processing':
+                        indicator.className = 'w-3 h-3 rounded-full bg-blue-500 animate-pulse';
+                        break;
+                    case 'error':
+                        indicator.className = 'w-3 h-3 rounded-full bg-red-500';
+                        break;
+                    case 'completed':
+                        indicator.className = 'w-3 h-3 rounded-full bg-gray-500';
+                        break;
+                    default:
+                        indicator.className = 'w-3 h-3 rounded-full bg-gray-400';
+                }
+
+                text.textContent = message;
+            }
+
+            updateLiveTranscript(text) {
+                const transcriptElement = document.getElementById('liveTranscript');
+                if (transcriptElement) {
+                    transcriptElement.textContent = text || 'Your spoken response will appear here...';
+                }
+            }
+        }
+
+        // Initialize voice interview manager
+        const voiceInterviewManager = new VoiceInterviewManager();
+
+// Kafka Video Streamer Class
+class KafkaVideoStreamer {
+        constructor() {
+            this.videoRecorder = null;
+            this.isRecording = false;
+            this.chunkCounter = 0;
+            this.totalChunks = 0;
+            this.recordingStartTime = null;
+            this.videoSessionId = null;
+        }
+
+        async startVideoStreaming(stream, interviewId, providedVideoSessionId = null) {
+            try {
+                if (!window.MediaRecorder) {
+                    throw new Error('MediaRecorder not supported');
+                }
+
+                const mimeTypes = [
+                    'video/webm;codecs=vp8',
+                    'video/webm;codecs=vp9',
+                    'video/webm',
+                    'video/mp4;codecs=avc1.42E01E',
+                    'video/mp4'
+                ];
+
+                let selectedMimeType = null;
+                for (const mimeType of mimeTypes) {
+                    if (MediaRecorder.isTypeSupported(mimeType)) {
+                        selectedMimeType = mimeType;
+                        break;
+                    }
+                }
+
+                if (!selectedMimeType) {
+                    throw new Error('No supported MIME types found');
+                }
+
+                const recorderOptions = {
+                    mimeType: selectedMimeType,
+                    videoBitsPerSecond: 150000,
+                    audioBitsPerSecond: 32000,
+                };
+
+                this.videoRecorder = new MediaRecorder(stream, recorderOptions);
+                this.videoSessionId = providedVideoSessionId;
+                this.chunkCounter = 0;
+                this.totalChunks = 0;
+                this.recordingStartTime = Date.now();
+
+                this.videoRecorder.ondataavailable = async (event) => {
+                    if (event.data && event.data.size > 0) {
+                        if (event.data.size < 1000 || event.data.size > 2 * 1024 * 1024) {
+                            return;
+                        }
+
+                        const success = await this.sendVideoChunkToKafka(event.data, interviewId);
+                        if (success) {
+                            this.totalChunks++;
+                            this.updateVideoChunkStatus();
+                        }
+                    }
+                };
+
+                this.videoRecorder.onstop = () => {
+                    this.finalizeVideoSession(interviewId);
+                };
+
+                this.videoRecorder.onerror = (event) => {
+                    console.error('MediaRecorder error:', event.error);
+                };
+
+                this.videoRecorder.start(5000);
+                this.isRecording = true;
+
+            } catch (error) {
+                console.error('Error starting video recording:', error);
+                throw error;
+            }
+        }
+
+        async sendVideoChunkToKafka(videoChunk, interviewId) {
+            try {
+                if (!videoChunk || videoChunk.size === 0) {
+                    return false;
+                }
+
+                const base64Video = await this.convertBlobToBase64(videoChunk);
+
+                const videoData = {
+                    interview_id: interviewId,
+                    chunk_number: this.chunkCounter++,
+                    video_data: base64Video,
+                    chunk_size: videoChunk.size,
+                    timestamp: Date.now(),
+                    mime_type: videoChunk.type
+                };
+
+                const response = await fetch('/interview/api/stream-video-chunk/', {
+                    method: 'POST',
+                    body: JSON.stringify(videoData),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    return result.success;
+                }
+                return false;
+
+            } catch (error) {
+                console.error('Error sending video chunk:', error);
+                return false;
+            }
+        }
+
+        convertBlobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onloadend = () => {
+                    try {
+                        // reader.result is already base64 when using readAsDataURL
+                        const base64data = reader.result.split(',')[1];
+                        resolve(base64data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+
+                reader.onerror = reject;
+
+                // ✅ This avoids stack overflow
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async finalizeVideoSession(interviewId) {
+            try {
+                const sessionEndData = {
+                    interview_id: interviewId,
+                    total_chunks: this.totalChunks,
+                    session_status: 'completed',
+                    ended_at: new Date().toISOString()
+                };
+
+                await fetch('/interview/api/finalize-video-session/', {
+                    method: 'POST',
+                    body: JSON.stringify(sessionEndData),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+            } catch (error) {
+                console.error('Error finalizing video session:', error);
+            }
+        }
+
+        stopVideoStreaming() {
+            if (this.videoRecorder && this.isRecording) {
+                this.videoRecorder.stop();
+                this.isRecording = false;
+            }
+        }
+
+        updateVideoChunkStatus() {
+            const statusElement = document.getElementById('videoChunkStatus');
+            if (statusElement) {
+                const duration = this.recordingStartTime ? Math.round((Date.now() - this.recordingStartTime) / 1000) : 0;
+                statusElement.textContent = `${this.totalChunks} chunks (${duration}s)`;
+            }
+        }
+    }
+
+    // Frontend Proctoring Class
+    class FrontendProctoring {
+        constructor() {
+            this.isActive = false;
+            this.speechSynthesis = window.speechSynthesis;
+            this.warningTimeout = null;
+            this.currentQuestion = '';
+            this.questionNumber = 0;
+            this.stage = 'preparing';
+
+        }
+
+        init() {
+            this.setupEventListeners();
+            this.isActive = true;
+            proctoringStartTime = Date.now();
+        }
+
+        setupEventListeners() {
+            document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+            document.addEventListener('webkitfullscreenchange', () => this.handleFullscreenChange());
+            document.addEventListener('mozfullscreenchange', () => this.handleFullscreenChange());
+            document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+            window.addEventListener('focus', () => this.handleFocus());
+            window.addEventListener('blur', () => this.handleBlur());
+            this.preventCheatingAttempts();
+            window.addEventListener('beforeunload', (e) => this.handlePageUnload(e));
+        }
+
+        handleFullscreenChange() {
+            const isCurrentlyFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement
+            );
+
+            isFullscreen = isCurrentlyFullscreen;
+
+            if (!isCurrentlyFullscreen && this.isActive && !interviewTerminated) {
+                this.recordViolation('fullscreen_exit', 'Exited fullscreen mode');
+            }
+        }
+
+        handleVisibilityChange() {
+            if (document.hidden && this.isActive && !interviewTerminated) {
+                this.recordViolation('tab_switch', 'Switched tab or minimized window');
+            }
+        }
+
+        handleFocus() {
+            hasFocus = true;
+        }
+
+        handleBlur() {
+            hasFocus = false;
+            if (this.isActive && !interviewTerminated) {
+                this.recordViolation('focus_loss', 'Lost window focus');
+            }
+        }
+
+        handlePageUnload(e) {
+            if (this.isActive && !interviewTerminated) {
+                e.preventDefault();
+                e.returnValue = 'Are you sure you want to leave? This will terminate your interview.';
+                this.recordViolation('page_unload', 'Attempted to leave interview page');
+                return e.returnValue;
+            }
+        }
+
+        preventCheatingAttempts() {
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (this.isActive) {
+                    this.recordViolation('context_menu', 'Attempted to open right-click menu');
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!this.isActive) return;
+
+                const forbiddenCombos = [
+                    { ctrl: true, shift: true, key: 'I' },
+                    { ctrl: true, shift: true, key: 'J' },
+                    { ctrl: true, shift: true, key: 'C' },
+                    { ctrl: true, key: 'U' },
+                    { ctrl: true, key: 'R' },
+                    { ctrl: true, key: 'W' },
+                    { ctrl: true, key: 'T' },
+                    { alt: true, key: 'Tab' },
+                    { ctrl: true, key: 'Tab' },
+                    { key: 'F12' },
+                    { key: 'F5' },
+                ];
+
+                for (const combo of forbiddenCombos) {
+                    if (this.matchesCombo(e, combo)) {
+                        e.preventDefault();
+                        this.recordViolation('forbidden_shortcut', `Blocked shortcut: ${this.getComboString(combo)}`);
+                        return;
+                    }
+                }
+
+                if (e.key === 'PrintScreen') {
+                    this.recordViolation('screenshot_attempt', 'Attempted to take screenshot');
+                }
+            });
+        }
+
+        matchesCombo(event, combo) {
+            return (combo.ctrl === undefined || combo.ctrl === event.ctrlKey) &&
+                (combo.shift === undefined || combo.shift === event.shiftKey) &&
+                (combo.alt === undefined || combo.alt === event.altKey) &&
+                combo.key.toLowerCase() === event.key.toLowerCase();
+        }
+
+        getComboString(combo) {
+            let str = '';
+            if (combo.ctrl) str += 'Ctrl+';
+            if (combo.alt) str += 'Alt+';
+            if (combo.shift) str += 'Shift+';
+            str += combo.key;
+            return str;
+        }
+
+        recordViolation(type, message) {
+            if (!this.isActive || interviewTerminated) return;
+
+            const violation = {
+                type,
+                message,
+                timestamp: new Date().toISOString(),
+                timeFromStart: Date.now() - proctoringStartTime
+            };
+
+            violations.push(violation);
+            violationCount++;
+
+            this.saveViolationsToStorage();
+            this.updateViolationCounter();
+
+            if (violationCount >= maxViolations) {
+                this.terminateInterview();
+            } else {
+                this.showViolationWarning(violation);
+            }
+        }
+
+        saveViolationsToStorage() {
+            try {
+                window.proctoringData = {
+                    violations,
+                    violationCount,
+                    startTime: proctoringStartTime,
+                    interviewId: interviewId || 'unknown'
+                };
+            } catch (e) {
+                console.warn('Could not save proctoring data:', e);
+            }
+        }
+
+        loadViolationsFromStorage() {
+            try {
+                if (window.proctoringData) {
+                    const data = window.proctoringData;
+                    violations = data.violations || [];
+                    violationCount = data.violationCount || 0;
+                    proctoringStartTime = data.startTime || Date.now();
+                    this.updateViolationCounter();
+                }
+            } catch (e) {
+                console.warn('Could not load proctoring data:', e);
+            }
+        }
+
+        showViolationWarning(violation) {
+            const modal = document.getElementById('proctoringModal');
+            const message = document.getElementById('violationMessage');
+            const count = document.getElementById('violationCount');
+
+            message.textContent = violation.message;
+            count.textContent = violationCount;
+
+            modal.style.display = 'flex';
+
+            if (this.warningTimeout) {
+                clearTimeout(this.warningTimeout);
+            }
+            this.warningTimeout = setTimeout(() => {
+                modal.style.display = 'none';
+            }, 8000);
+        }
+
+        terminateInterview() {
+            this.isActive = false;
+            interviewTerminated = true;
+            alert('Interview terminated due to multiple violations.');
+            window.location.href = '/';
+        }
+
+        updateViolationCounter() {
+            const navCounter = document.getElementById('violationCounter');
+            if (navCounter) {
+                navCounter.textContent = `${violationCount}/${maxViolations}`;
+
+                if (violationCount >= maxViolations) {
+                    navCounter.className = 'px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300';
+                } else if (violationCount === 1) {
+                    navCounter.className = 'px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-300';
+                } else {
+                    navCounter.className = 'px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-300';
+                }
+            }
+        }
+
+        stop() {
+            this.isActive = false;
+            if (this.warningTimeout) {
+                clearTimeout(this.warningTimeout);
+            }
+        }
+    }
+
+    // Initialize components
+    const frontendProctoring = new FrontendProctoring();
+    let kafkaVideoStreamer = null;
+
+    // Utility functions
+    function updateSessionStatusUI() {
+        const frameDisplay = document.getElementById('frameSessionDisplay');
+        const videoDisplay = document.getElementById('videoSessionDisplay');
+        const frameStatus = document.getElementById('frameSessionStatus');
+        const videoStatus = document.getElementById('videoSessionStatus');
+
+        if (frameDisplay && frameSessionId) {
+            frameDisplay.textContent = frameSessionId.substring(0, 8) + '...';
+        }
+        if (videoDisplay && videoSessionId) {
+            videoDisplay.textContent = videoSessionId.substring(0, 8) + '...';
+        }
+
+        if (frameStatus) {
+            frameStatus.textContent = frameSessionId ? 'Active' : 'Inactive';
+            frameStatus.className = frameSessionId ? 'text-green-400' : 'text-red-400';
+        }
+        if (videoStatus) {
+            videoStatus.textContent = videoSessionId ? 'Active' : 'Inactive';
+            videoStatus.className = videoSessionId ? 'text-green-400' : 'text-red-400';
+        }
+    }
+
+    // REPLACE your getSessionIds function with this:
+    async function getSessionIds() {
+        try {
+            // Don't try to start interview again - just get current status
+            const response = await fetch('/interview/api/current/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // Mock session IDs since interview is already started
+                    return {
+                        frame_session_id: `frame_${result.interview_id}_${Date.now()}`,
+                        video_session_id: `video_${result.interview_id}_${Date.now()}`
+                    };
+                }
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting session IDs:', error);
+            return null;
+        }
+    }
+    // Main initialization
+    document.addEventListener('DOMContentLoaded', function () {
+        setupCheckboxValidation();
+        showFullscreenModal();
+    });
+
+    function setupCheckboxValidation() {
+        const checkboxes = ['confirmEnvironment', 'confirmTechnology', 'confirmRules', 'confirmProcess'];
+        const startButton = document.getElementById('enterFullscreenBtn');
+
+        function updateStartButton() {
+            const allChecked = checkboxes.every(id => document.getElementById(id)?.checked);
+
+            if (allChecked) {
+                startButton.disabled = false;
+                startButton.className = 'bg-green-600 hover:bg-green-700 px-8 py-4 rounded-lg font-bold text-lg transition-all duration-300';
+                startButton.innerHTML = '<i class="fas fa-rocket mr-2"></i>Start My Interview Now!';
+            } else {
+                startButton.disabled = true;
+                startButton.className = 'bg-gray-500 hover:bg-gray-600 px-8 py-4 rounded-lg font-bold text-lg transition-all duration-300 cursor-not-allowed';
+                startButton.innerHTML = '<i class="fas fa-lock mr-2"></i>Complete Checklist to Start';
+            }
+        }
+
+        checkboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                checkbox.addEventListener('change', updateStartButton);
+            }
+        });
+
+        setTimeout(updateStartButton, 100);
+    }
+
+    function showFullscreenModal() {
+        const modal = document.getElementById('fullscreenModal');
+        const enterBtn = document.getElementById('enterFullscreenBtn');
+
+        modal.style.display = 'flex';
+
+        enterBtn.onclick = async () => {
+            try {
+                const element = document.documentElement;
+                if (element.requestFullscreen) {
+                    await element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) {
+                    await element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    await element.mozRequestFullScreen();
+                }
+
+                modal.style.display = 'none';
+                initializeInterview();
+
+            } catch (error) {
+                console.error('Error entering fullscreen:', error);
+                alert('Fullscreen mode is required for this interview. Please try again.');
+            }
+        };
+    }
+
+    async function initializeInterview() {
+        try {
+            frontendProctoring.loadViolationsFromStorage();
+            frontendProctoring.init();
+            proctoringActive = true;
+
+            await getCurrentInterviewId();
+            await initializeMediaStream();
+
+            const sessionIds = await getSessionIds();
+            if (sessionIds) {
+                frameSessionId = sessionIds.frame_session_id;
+                videoSessionId = sessionIds.video_session_id;
+            } else {
+                frameSessionId = `frame_fallback_${interviewId}_${Date.now()}`;
+                videoSessionId = `video_fallback_${interviewId}_${Date.now()}`;
+            }
+
+            await startKafkaStreaming();
+
+            const voiceInitialized = await voiceInterviewManager.initialize();
+            if (!voiceInitialized) {
+                throw new Error('Voice interview initialization failed');
+            }
+
+            setupEnhancedControls();
+
+            console.log('Interview initialized successfully');
+        } catch (error) {
+            console.error('Error initializing interview:', error);
+            alert('Failed to initialize interview: ' + error.message);
+        }
+    }
+
+    function setupEnhancedControls() {
+        document.getElementById('returnToInterviewBtn').onclick = () => {
+            document.getElementById('proctoringModal').style.display = 'none';
+            if (!isFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => { });
+            }
+        };
+
+        document.getElementById('startVoiceInterviewBtn').onclick = async function () {
+            this.disabled = true;
+            await voiceInterviewManager.unlockSpeechSynthesis();
+            const success = await voiceInterviewManager.startInterview();
+            if (!success) {
+                this.disabled = false;
+            } else {
+                this.textContent = 'Interview Active';
+                this.className = 'w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium cursor-not-allowed';
+            }
+        };
+
+        document.getElementById('endInterviewBtn').onclick = async function () {
+            if (confirm('Are you sure you want to end the interview? This action cannot be undone.')) {
+                try {
+                    voiceInterviewManager.isActive = false;
+                    frontendProctoring.stop();
+                    proctoringActive = false;
+
+                    stopKafkaStreaming();
+
+                    const response = await fetch('/interview/api/end/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        const processingModal = document.createElement('div');
+                        processingModal.className = 'fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center';
+                        processingModal.innerHTML = `
+                        <div class="bg-gray-800 p-8 rounded-lg max-w-md text-center border-2 border-blue-500">
+                            <div class="text-blue-500 mb-6">
+                                <i class="fas fa-check-circle text-5xl"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-4">Interview Completed!</h2>
+                            <p class="text-gray-300 mb-4">Your responses have been recorded.</p>
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                        </div>
+                    `;
+
+                        document.body.appendChild(processingModal);
+
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen().catch(() => { });
+                        }
+
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Failed to end interview');
+                    }
+                } catch (error) {
+                    console.error('Error ending interview:', error);
+                    alert('Error ending interview: ' + error.message);
+                }
+            }
+        };
+    }
+
+    async function getCurrentInterviewId() {
+        try {
+            const response = await fetch('/interview/api/current/', {
+                method: 'GET',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.interview_id) {
+                    interviewId = data.interview_id;
+                    return;
+                }
+            }
+
+            const fallbackResponse = await fetch('/interview/api/interviews/');
+            const interviews = await fallbackResponse.json();
+            const activeInterview = interviews.find(interview => interview.status === 'in_progress');
+
+            if (activeInterview) {
+                interviewId = activeInterview.id;
+            } else {
+                throw new Error('No active interview found');
+            }
+        } catch (error) {
+            console.error('Error getting interview ID:', error);
+            throw error;
+        }
+    }
+
+    async function initializeMediaStream() {
+        try {
+            const isFirstPermissionRequest = !window.sessionStorage?.getItem('camera_permission_requested');
+
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    frameRate: { ideal: 15 }
+                },
+                audio: true
+            });
+
+            if (isFirstPermissionRequest) {
+                window.sessionStorage?.setItem('camera_permission_requested', 'true');
+            }
+
+            const video = document.getElementById('video');
+            video.srcObject = new MediaStream(mediaStream.getVideoTracks());
+
+            console.log('Media stream initialized successfully');
+
+        } catch (error) {
+            console.error('Error accessing media devices:', error);
+            alert('Camera/Microphone access is required for the interview. Please allow permissions and refresh the page.');
+            throw error;
+        }
+    }
+
+    async function startKafkaStreaming() {
+        if (!interviewId || !mediaStream) {
+            console.error('Cannot start Kafka streaming: missing interviewId or mediaStream');
+            return;
+        }
+
+        try {
+            kafkaStreaming = true;
+
+            kafkaVideoStreamer = new KafkaVideoStreamer();
+            await kafkaVideoStreamer.startVideoStreaming(mediaStream, interviewId, videoSessionId);
+
+            startFrameStreaming();
+
+            updateKafkaStatus('connected');
+            console.log('Kafka streaming started successfully');
+
+        } catch (error) {
+            console.error('Error starting Kafka streaming:', error);
+            updateKafkaStatus('error');
+        }
+    }
+
+    function startFrameStreaming() {
+        const video = document.getElementById('video');
+        streamingInterval = setInterval(async () => {
+            if (kafkaStreaming && video.videoWidth > 0 && video.videoHeight > 0) {
+                await streamFrameToKafka();
+            }
+        }, 2000);
+    }
+
+    async function streamFrameToKafka() {
+        try {
+            const canvas = document.createElement('canvas');
+            const video = document.getElementById('video');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const base64Frame = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+            const frameData = {
+                frame_data: base64Frame,
+                frame_number: framesStreamed,
+                width: canvas.width,
+                height: canvas.height
+            };
+
+            const response = await fetch('/interview/api/stream-frame/', {
+                method: 'POST',
+                body: JSON.stringify(frameData),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+
+            if (response.ok) {
+                framesStreamed++;
+                document.getElementById('framesStreamed').textContent = framesStreamed;
+                document.getElementById('frameCount').textContent = framesStreamed;
+                updateStreamStatus('streaming');
+            } else {
+                updateStreamStatus('error');
+            }
+        } catch (error) {
+            console.error('Frame streaming error:', error);
+            updateStreamStatus('error');
+        }
+    }
+
+    function stopKafkaStreaming() {
+        kafkaStreaming = false;
+
+        if (kafkaVideoStreamer) {
+            kafkaVideoStreamer.stopVideoStreaming();
+        }
+
+        if (streamingInterval) {
+            clearInterval(streamingInterval);
+            streamingInterval = null;
+        }
+
+        updateKafkaStatus('disconnected');
+        updateStreamStatus('stopped');
+    }
+
+    function updateKafkaStatus(status) {
+        const connectionStatusElement = document.getElementById('kafkaConnectionStatus');
+
+        const statusConfig = {
+            'connecting': { text: 'Connecting...', class: 'text-yellow-400' },
+            'connected': { text: 'Connected', class: 'text-green-400' },
+            'disconnected': { text: 'Disconnected', class: 'text-gray-400' },
+            'error': { text: 'Error', class: 'text-red-400' }
+        };
+
+        const config = statusConfig[status] || statusConfig['error'];
+
+        if (connectionStatusElement) {
+            connectionStatusElement.textContent = config.text;
+            connectionStatusElement.className = config.class;
+        }
+    }
+
+    function updateStreamStatus(status) {
+        const streamStatusElement = document.getElementById('streamStatus');
+
+        const statusConfig = {
+            'streaming': { text: 'Streaming to Kafka', class: 'text-green-400', icon: 'fas fa-circle' },
+            'stopped': { text: 'Stream Stopped', class: 'text-gray-400', icon: 'fas fa-stop' },
+            'error': { text: 'Stream Error', class: 'text-red-400', icon: 'fas fa-exclamation-triangle' }
+        };
+
+        const config = statusConfig[status] || statusConfig['error'];
+
+        if (streamStatusElement) {
+            streamStatusElement.innerHTML = `<i class="${config.icon} mr-1"></i>${config.text}`;
+            streamStatusElement.className = 'ml-auto text-sm ' + config.class;
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    function speakText(text) {
+        if (!('speechSynthesis' in window)) {
+            console.log("TTS not supported");
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        // Optional: choose voice
+        const voices = speechSynthesis.getVoices();
+        const englishVoice = voices.find(v => v.lang.includes("en"));
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+        }
+
+        speechSynthesis.speak(utterance);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,1368 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="adminDashboard()">
+   <!-- Header -->
+   <div class="bg-white shadow-sm border-b">
+       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+           <div class="flex justify-between items-center py-6">
+               <div>
+                   <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                   <p class="text-gray-600">Mock Interview Platform Management</p>
+                   <p class="text-sm text-gray-500">Welcome, {{ user.get_full_name }}</p>
+               </div>
+               <div class="flex items-center space-x-4">
+                   <button @click="refreshData()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                       <i class="fas fa-sync-alt mr-2"></i>Refresh
+                   </button>
+                   <a href="/admin/" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-200">
+                       <i class="fas fa-cogs mr-2"></i>Django Admin
+                   </a>
+                   <a href="{% url 'logout' %}" class="text-gray-600 hover:text-gray-900">
+                       <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                   </a>
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <!-- Stats Cards -->
+   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+           <div class="bg-white rounded-lg shadow p-6">
+               <div class="flex items-center">
+                   <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                       <i class="fas fa-users text-xl"></i>
+                   </div>
+                   <div class="ml-4">
+                       <p class="text-sm font-medium text-gray-600">Total Students</p>
+                       <p class="text-2xl font-bold text-gray-900" x-text="stats.totalStudents">0</p>
+                   </div>
+               </div>
+           </div>
+
+           <div class="bg-white rounded-lg shadow p-6">
+               <div class="flex items-center">
+                   <div class="p-3 rounded-full bg-green-100 text-green-600">
+                       <i class="fas fa-clipboard-check text-xl"></i>
+                   </div>
+                   <div class="ml-4">
+                       <p class="text-sm font-medium text-gray-600">Completed Interviews</p>
+                       <p class="text-2xl font-bold text-gray-900" x-text="stats.completedInterviews">0</p>
+                   </div>
+               </div>
+           </div>
+
+           <div class="bg-white rounded-lg shadow p-6">
+               <div class="flex items-center">
+                   <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                       <i class="fas fa-clock text-xl"></i>
+                   </div>
+                   <div class="ml-4">
+                       <p class="text-sm font-medium text-gray-600">Pending Requests</p>
+                       <p class="text-2xl font-bold text-gray-900" x-text="stats.pendingRequests">0</p>
+                   </div>
+               </div>
+           </div>
+
+           <div class="bg-white rounded-lg shadow p-6">
+               <div class="flex items-center">
+                   <div class="p-3 rounded-full bg-red-100 text-red-600">
+                       <i class="fas fa-exclamation-triangle text-xl"></i>
+                   </div>
+                   <div class="ml-4">
+                       <p class="text-sm font-medium text-gray-600">Cheating Detected</p>
+                       <p class="text-2xl font-bold text-gray-900" x-text="stats.cheatingDetected">0</p>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Tabs -->
+       <div class="bg-white rounded-lg shadow">
+           <div class="border-b border-gray-200">
+               <nav class="-mb-px flex space-x-8 px-6">
+                   <button @click="activeTab = 'requests'"
+                           :class="activeTab === 'requests' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                           class="py-4 px-1 border-b-2 font-medium text-sm">
+                       Interview Requests
+                       <span x-show="stats.pendingRequests > 0" class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pendingRequests"></span>
+                   </button>
+                   <button @click="activeTab = 'interviews'"
+                           :class="activeTab === 'interviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                           class="py-4 px-1 border-b-2 font-medium text-sm">
+                       All Interviews
+                   </button>
+                   <button @click="activeTab = 'students'"
+                           :class="activeTab === 'students' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                           class="py-4 px-1 border-b-2 font-medium text-sm">
+                       Student Management
+                   </button>
+               </nav>
+           </div>
+
+           <!-- Interview Requests Tab -->
+           <div x-show="activeTab === 'requests'" class="p-6">
+               <div class="mb-4 flex justify-between items-center">
+                   <h3 class="text-lg font-medium text-gray-900">Interview Requests</h3>
+                   <div class="flex space-x-3">
+                       <!-- Search Box for Interview Requests -->
+                       <div class="relative">
+                           <input type="text" x-model="searchRequests" @input="filterRequests()"
+                                  placeholder="Search by name, email, or ID..."
+                                  class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                               <i class="fas fa-search text-gray-400"></i>
+                           </div>
+                       </div>
+                       <button @click="loadInterviews()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                           <i class="fas fa-refresh mr-1"></i>Refresh
+                       </button>
+                   </div>
+               </div>
+
+               <div class="overflow-x-auto">
+                   <table class="min-w-full divide-y divide-gray-200">
+                       <thead class="bg-gray-50">
+                           <tr>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Date</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attempt</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                           </tr>
+                       </thead>
+                       <tbody class="bg-white divide-y divide-gray-200">
+                           <template x-for="interview in filteredRequests" :key="interview.id">
+                               <tr>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <div class="text-sm font-medium text-gray-900" x-text="interview.student_name"></div>
+                                       <div class="text-sm text-gray-500" x-text="interview.student_email"></div>
+                                       <div class="text-xs text-gray-400" x-text="'ID: ' + (interview.student_id || 'N/A')"></div>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatDate(interview.requested_at)"></td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="'#' + interview.attempt_number"></td>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                           Pending Approval
+                                       </span>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <button @click="showAvailabilityModal(interview)"
+                                               :class="interview.has_complete_availability ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'"
+                                               class="px-3 py-1 rounded-full text-xs font-medium transition-colors">
+                                           <i class="fas fa-calendar-alt mr-1"></i>
+                                           <span x-text="interview.has_complete_availability ? 'View Details' : 'Incomplete'"></span>
+                                       </button>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                       <button @click="showApprovalModal(interview)" class="text-green-600 hover:text-green-900">
+                                           <i class="fas fa-check mr-1"></i>Approve
+                                       </button>
+                                       <button @click="showRejectionModal(interview)" class="text-red-600 hover:text-red-900">
+                                           <i class="fas fa-times mr-1"></i>Reject
+                                       </button>
+                                   </td>
+                               </tr>
+                           </template>
+                           <tr x-show="filteredRequests.length === 0">
+                               <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                   <div class="flex flex-col items-center">
+                                       <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                                       <p x-text="searchRequests ? 'No matching requests found' : 'No pending requests'"></p>
+                                   </div>
+                               </td>
+                           </tr>
+                       </tbody>
+                   </table>
+               </div>
+           </div>
+
+           <!-- All Interviews Tab -->
+           <div x-show="activeTab === 'interviews'" class="p-6">
+               <div class="mb-4 flex justify-between items-center">
+                   <h3 class="text-lg font-medium text-gray-900">All Interviews</h3>
+                   <div class="flex space-x-3">
+                       <!-- Search Box for All Interviews -->
+                       <div class="relative">
+                           <input type="text" x-model="searchInterviews" @input="filterInterviews()"
+                                  placeholder="Search by name, email, or status..."
+                                  class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                               <i class="fas fa-search text-gray-400"></i>
+                           </div>
+                       </div>
+                       <button @click="loadInterviews()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                           <i class="fas fa-refresh mr-1"></i>Refresh
+                       </button>
+                   </div>
+               </div>
+
+               <div class="overflow-x-auto">
+                   <table class="min-w-full divide-y divide-gray-200">
+                       <thead class="bg-gray-50">
+                           <tr>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview Taken</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                           </tr>
+                       </thead>
+                       <tbody class="bg-white divide-y divide-gray-200">
+                           <template x-for="interview in filteredInterviews" :key="interview.id">
+                               <tr>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <div class="text-sm font-medium text-gray-900" x-text="interview.student_name"></div>
+                                       <div class="text-sm text-gray-500" x-text="interview.student_email"></div>
+                                       <div class="text-xs text-gray-400" x-text="'Attempt #' + interview.attempt_number"></div>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatDate(interview.created_at)"></td>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <span :class="getStatusClass(interview.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="getStatusDisplay(interview.status)"></span>
+                                       <div x-show="interview.status === 'approved' && interview.time_remaining > 0" class="text-xs text-orange-600 mt-1">
+                                           <span x-text="interview.time_remaining + ' min left'"></span>
+                                       </div>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                       <span x-text="interview.overall_score ? interview.overall_score.toFixed(1) + '%' : 'N/A'"></span>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                       <template x-if="interview.status === 'completed'">
+                                           <span class="text-green-600 font-medium">
+                                               <i class="fas fa-check-circle mr-1"></i>Yes
+                                           </span>
+                                       </template>
+                                       <template x-if="interview.status === 'in_progress'">
+                                           <span class="text-blue-600 font-medium">
+                                               <i class="fas fa-clock mr-1"></i>In Progress
+                                           </span>
+                                       </template>
+                                       <template x-if="interview.status === 'approved'">
+                                           <span class="text-orange-600 font-medium">
+                                               <i class="fas fa-hourglass-half mr-1"></i>Waiting
+                                           </span>
+                                       </template>
+                                       <template x-if="interview.status === 'expired'">
+                                           <span class="text-red-600 font-medium">
+                                               <i class="fas fa-times-circle mr-1"></i>Expired
+                                           </span>
+                                       </template>
+                                       <template x-if="!['completed', 'in_progress', 'approved', 'expired'].includes(interview.status)">
+                                           <span class="text-gray-400">N/A</span>
+                                       </template>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <button @click="showAvailabilityModal(interview)"
+                                               :class="interview.has_complete_availability ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'"
+                                               class="px-3 py-1 rounded-full text-xs font-medium transition-colors">
+                                           <i class="fas fa-calendar-alt mr-1"></i>
+                                           <span x-text="interview.has_complete_availability ? 'View Details' : 'Incomplete'"></span>
+                                       </button>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <template x-if="interview.status === 'completed'">
+                                        <div class="flex flex-col space-y-1">
+                                            <!-- First row of buttons -->
+                                            <div class="flex space-x-2">
+                                                <button @click="viewReport(interview.id)" 
+                                                        class="text-blue-600 hover:text-blue-900 text-xs bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded">
+                                                    <i class="fas fa-chart-line mr-1"></i>View Report
+                                                </button>
+                                                <button @click="viewVideoRecording(interview.id)" 
+                                                        class="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded">
+                                                    <i class="fas fa-video mr-1"></i>View Recording
+                                                </button>
+                                            </div>
+                                            <!-- Second row -->
+                                            <div class="flex space-x-2">
+                                                <button @click="deleteInterview(interview.id)" 
+                                                        class="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded">
+                                                    <i class="fas fa-trash mr-1"></i>Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    
+                                    <template x-if="interview.status === 'in_progress'">
+                                        <div class="flex flex-col space-y-1">
+                                            <span class="text-blue-600 font-medium text-xs">
+                                                <i class="fas fa-clock mr-1"></i>Interview Active
+                                            </span>
+                                            <button @click="viewVideoRecording(interview.id)" 
+                                                    class="text-orange-600 hover:text-orange-900 text-xs bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded">
+                                                <i class="fas fa-eye mr-1"></i>Live Monitor
+                                            </button>
+                                        </div>
+                                    </template>
+                                    
+                                    <template x-if="!['completed', 'in_progress'].includes(interview.status)">
+                                        <div class="flex space-x-2">
+                                            <button @click="deleteInterview(interview.id)" 
+                                                    class="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded">
+                                                <i class="fas fa-trash mr-1"></i>Delete
+                                            </button>
+                                        </div>
+                                    </template>
+                                </td>
+                               </tr>
+                           </template>
+                           <tr x-show="filteredInterviews.length === 0">
+                               <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                   <div class="flex flex-col items-center">
+                                       <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-2"></i>
+                                       <p x-text="searchInterviews ? 'No matching interviews found' : 'No interviews found'"></p>
+                                   </div>
+                               </td>
+                           </tr>
+                       </tbody>
+                   </table>
+               </div>
+           </div>
+
+           <!-- Students Tab -->
+           <div x-show="activeTab === 'students'" class="p-6">
+               <div class="mb-4 flex justify-between items-center">
+                   <h3 class="text-lg font-medium text-gray-900">Student Management</h3>
+                   <div class="flex space-x-3">
+                       <!-- Search Box for Students -->
+                       <div class="relative">
+                           <input type="text" x-model="searchStudents" @input="filterStudents()"
+                                  placeholder="Search by name, email, or ID..."
+                                  class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                               <i class="fas fa-search text-gray-400"></i>
+                           </div>
+                       </div>
+                       <button @click="loadStudents()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                           <i class="fas fa-refresh mr-1"></i>Refresh
+                       </button>
+                       <a href="/admin/user_management/customuser/add/" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                           <i class="fas fa-plus mr-2"></i>Add Student
+                       </a>
+                   </div>
+               </div>
+
+               <div class="overflow-x-auto">
+                   <table class="min-w-full divide-y divide-gray-200">
+                       <thead class="bg-gray-50">
+                           <tr>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Info</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
+                               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                           </tr>
+                       </thead>
+                       <tbody class="bg-white divide-y divide-gray-200">
+                           <template x-for="student in filteredStudents" :key="student.id">
+                               <tr>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <div class="text-sm font-medium text-gray-900" x-text="student.full_name"></div>
+                                       <div class="text-sm text-gray-500" x-text="'ID: ' + (student.student_id || 'N/A')"></div>
+                                       <div class="text-xs text-gray-400" x-text="'Joined: ' + student.date_joined"></div>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <div class="text-sm text-gray-900" x-text="student.email"></div>
+                                       <div class="text-sm text-gray-500" x-text="student.phone_number || 'N/A'"></div>
+                                       <div class="text-xs text-gray-400" x-text="'Last login: ' + (student.last_login || 'Never')"></div>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                       <div class="flex items-center">
+                                           <i class="fas fa-clipboard-list mr-2 text-blue-500"></i>
+                                           <span x-text="(student.interview_count || 0) + ' interviews'"></span>
+                                       </div>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <span :class="student.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                                           <span x-text="student.is_active ? 'Active' : 'Inactive'"></span>
+                                       </span>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap">
+                                       <button @click="showStudentAvailabilityModal(student)"
+                                               :class="student.has_complete_availability ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'"
+                                               class="px-3 py-1 rounded-full text-xs font-medium transition-colors">
+                                           <i class="fas fa-calendar-alt mr-1"></i>
+                                           <span x-text="student.has_complete_availability ? 'View Details' : 'Incomplete'"></span>
+                                       </button>
+                                   </td>
+                                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                       <button @click="toggleStudentStatus(student.id)"
+                                               :class="student.is_active ? 'text-yellow-600 hover:text-yellow-900' : 'text-green-600 hover:text-green-900'"
+                                               class="mr-3">
+                                           <span x-text="student.is_active ? 'Deactivate' : 'Activate'"></span>
+                                       </button>
+                                       <a :href="'/admin/user_management/customuser/' + student.id + '/change/'" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                                       <button @click="deleteStudent(student.id)" class="text-red-600 hover:text-red-900">Delete</button>
+                                   </td>
+                               </tr>
+                           </template>
+                           <tr x-show="filteredStudents.length === 0">
+                               <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                   <div class="flex flex-col items-center">
+                                       <i class="fas fa-users text-4xl text-gray-300 mb-2"></i>
+                                       <p x-text="searchStudents ? 'No matching students found' : 'No students found'"></p>
+                                   </div>
+                               </td>
+                           </tr>
+                       </tbody>
+                   </table>
+               </div>
+           </div>
+       </div>
+   </div>
+
+    <!-- Approval Modal -->
+    <div x-show="showApprovalModalFlag" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" x-cloak>
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Approve Interview Request</h3>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt mr-1 text-blue-500"></i>
+                        Schedule Interview Date & Time (IST) <span class="text-red-500">*</span>
+                    </label>
+                            <input type="datetime-local" x-model="approvalData.scheduled_at" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       <div class="mt-2 p-3 bg-blue-50 rounded-lg">
+                                <p class="text-xs text-blue-700 mb-1">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    <strong>IST Scheduling Rules:</strong>
+                                </p>
+                                <ul class="text-xs text-blue-600 space-y-1">
+                                    <li>• Student can join 15 minutes before scheduled time</li>
+                                    <li>• Interview expires 60 minutes after scheduled time</li>
+                                    <li>• All times are in Indian Standard Time (IST)</li>
+                                </ul>
+                        </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Admin Notes (Optional)</label>
+                    <textarea x-model="approvalData.admin_notes" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Add any notes for the student..."></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button @click="showApprovalModalFlag = false"
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button @click="approveInterview()"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Approve & Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Modal -->
+    <div x-show="showRejectionModalFlag" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" x-cloak>
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Interview Request</h3>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Rejection</label>
+                    <textarea x-model="rejectionData.admin_notes" rows="4"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                              placeholder="Please provide a reason for rejection..."></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button @click="showRejectionModalFlag = false"
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button @click="rejectInterview()"
+                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Reject Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Availability Details Modal -->
+    <div x-show="showAvailabilityModalFlag" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" x-cloak>
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Student Availability Details</h3>
+                    <button @click="showAvailabilityModalFlag = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div x-show="selectedStudent" class="space-y-6">
+                    <!-- Student Basic Info -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="text-md font-medium text-gray-900 mb-3">Student Information</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Name</label>
+                                <p class="text-sm text-gray-900" x-text="selectedStudent ? selectedStudent.student_name || selectedStudent.full_name : ''"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Email</label>
+                                <p class="text-sm text-gray-900" x-text="selectedStudent ? selectedStudent.student_email || selectedStudent.email : ''"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Student ID</label>
+                                <p class="text-sm text-gray-900" x-text="selectedStudent ? selectedStudent.student_id : ''"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Availability Status -->
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="text-md font-medium text-gray-900 mb-3">Availability Status</h4>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center">
+                                <i :class="selectedStudent && selectedStudent.has_complete_availability ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500'" class="mr-2"></i>
+                                <span :class="selectedStudent && selectedStudent.has_complete_availability ? 'text-green-700' : 'text-red-700'" class="font-medium">
+                                    <span x-text="selectedStudent && selectedStudent.has_complete_availability ? 'Complete' : 'Incomplete'"></span>
+                                </span>
+                            </div>
+                            <div x-show="selectedStudent && selectedStudent.availability_updated_at">
+                                <span class="text-sm text-gray-600">
+                                    Last Updated: <span x-text="selectedStudent ? selectedStudent.availability_updated_at : ''"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Batch and Preference Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white border border-gray-200 p-4 rounded-lg">
+                            <h5 class="text-sm font-medium text-gray-700 mb-2">Batch Information</h5>
+                            <p class="text-sm text-gray-900" x-text="selectedStudent && selectedStudent.student_batch_id ? selectedStudent.student_batch_id : 'Not provided'"></p>
+                        </div>
+                        <div class="bg-white border border-gray-200 p-4 rounded-lg">
+                            <h5 class="text-sm font-medium text-gray-700 mb-2">Interview Preference</h5>
+                            <p class="text-sm text-gray-900" x-text="selectedStudent && selectedStudent.student_preference ? selectedStudent.student_preference : selectedStudent && selectedStudent.interview_preference ? selectedStudent.interview_preference : 'Not specified'"></p>
+                        </div>
+                    </div>
+
+                    <!-- Time Slots -->
+                    <div class="bg-white border border-gray-200 p-4 rounded-lg">
+                        <h5 class="text-sm font-medium text-gray-700 mb-4">Available Time Slots</h5>
+                        <div x-show="selectedStudent && selectedStudent.student_availability_slots && selectedStudent.student_availability_slots.length > 0">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <template x-for="(slot, index) in (selectedStudent ? selectedStudent.student_availability_slots || selectedStudent.availability_slots || [] : [])" :key="index">
+                                    <div class="border border-gray-300 rounded-lg p-3 bg-gray-50">
+                                        <h6 class="text-xs font-medium text-gray-600 mb-2" x-text="'Time Slot ' + (index + 1)"></h6>
+                                        <div class="space-y-1">
+                                            <div class="flex justify-between">
+                                                <span class="text-xs text-gray-500">Date:</span>
+                                                <span class="text-xs text-gray-900" x-text="slot.date || 'Not set'"></span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-xs text-gray-500">Day:</span>
+                                                <span class="text-xs text-gray-900" x-text="slot.day || 'Not set'"></span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-xs text-gray-500">Time:</span>
+                                                <span class="text-xs text-gray-900" x-text="(slot.from_time && slot.to_time) ? slot.from_time + ' - ' + slot.to_time : 'Not set'"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div x-show="!selectedStudent || !selectedStudent.student_availability_slots || (selectedStudent.student_availability_slots && selectedStudent.student_availability_slots.length === 0)" class="text-center py-4">
+                            <i class="fas fa-calendar-times text-3xl text-gray-300 mb-2"></i>
+                            <p class="text-gray-500">No availability slots provided</p>
+                        </div>
+                    </div>
+
+                    <!-- Availability Summary -->
+                    <div x-show="selectedStudent && (selectedStudent.availability_summary || selectedStudent.student_availability_summary)" class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                        <h5 class="text-sm font-medium text-green-800 mb-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+       <div class="mb-4">
+    <label class="block text-sm font-medium text-gray-700 mb-2">
+        <i class="fas fa-calendar-alt mr-1 text-blue-500"></i>
+        Schedule Interview Date & Time (IST) <span class="text-red-500">*</span>
+    </label>
+    <input type="datetime-local" x-model="approvalData.scheduled_at" required
+           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <div class="mt-2 p-3 bg-blue-50 rounded-lg">
+        <p class="text-xs text-blue-700 mb-1">
+            <i class="fas fa-info-circle mr-1"></i>
+            <strong>IST Scheduling Rules:</strong>
+        </p>
+        <ul class="text-xs text-blue-600 space-y-1">
+            <li>• Student can join 15 minutes before scheduled time</li>
+            <li>• Interview expires 60 minutes after scheduled time</li>
+            <li>• All times are in Indian Standard Time (IST)</li>
+        </ul>
+    </div>
+</div>                     Availability Summary
+                        </h5>
+                        <p class="text-sm text-green-700" x-text="selectedStudent ? (selectedStudent.availability_summary || selectedStudent.student_availability_summary) : ''"></p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <button @click="showAvailabilityModalFlag = false"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                            Close
+                        </button>
+                        <button x-show="selectedStudent && selectedStudent.id && !selectedStudent.has_complete_availability"
+                                @click="contactStudent(selectedStudent)"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            <i class="fas fa-envelope mr-1"></i>
+                            Contact Student
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function adminDashboard() {
+   return {
+       activeTab: 'requests',
+       stats: {
+           totalStudents: 0,
+           completedInterviews: 0,
+           pendingRequests: 0,
+           cheatingDetected: 0
+       },
+       interviews: [],
+       pendingRequests: [],
+       students: [],
+
+       // Filtered arrays for search functionality
+       filteredRequests: [],
+       filteredInterviews: [],
+       filteredStudents: [],
+
+       // Search terms
+       searchRequests: '',
+       searchInterviews: '',
+       searchStudents: '',
+
+       // Modal states
+       showApprovalModalFlag: false,
+       showRejectionModalFlag: false,
+       showAvailabilityModalFlag: false,
+
+       selectedInterview: null,
+       selectedStudent: null,
+
+       approvalData: {
+           scheduled_at: '',
+           admin_notes: ''
+       },
+       rejectionData: {
+           admin_notes: ''
+       },
+
+       init() {
+           console.log('Admin dashboard initializing...');
+           this.loadDashboardData();
+           // Refresh data every 30 seconds
+           setInterval(() => this.loadDashboardData(), 30000);
+       },
+
+       loadDashboardData() {
+           console.log('Loading dashboard data...');
+           Promise.all([
+               this.loadInterviews(),
+               this.loadStudents()
+           ]).then(() => {
+               this.calculateStats();
+               this.filterRequests();
+               this.filterInterviews();
+               this.filterStudents();
+               console.log('Dashboard data loaded successfully');
+           }).catch(error => {
+               console.error('Error loading dashboard data:', error);
+           });
+       },
+
+       calculateStats() {
+           this.stats.totalStudents = this.students.length;
+           this.stats.completedInterviews = this.interviews.filter(i => i.status === 'completed').length;
+           this.stats.pendingRequests = this.interviews.filter(i => i.status === 'requested').length;
+           this.stats.cheatingDetected = this.interviews.filter(i => i.cheating_detected).length;
+           console.log('Stats calculated:', this.stats);
+       },
+
+       // Search and Filter Functions
+       filterRequests() {
+           if (!this.searchRequests.trim()) {
+               this.filteredRequests = this.pendingRequests;
+           } else {
+               const search = this.searchRequests.toLowerCase().trim();
+               this.filteredRequests = this.pendingRequests.filter(interview =>
+                   interview.student_name.toLowerCase().includes(search) ||
+                   interview.student_email.toLowerCase().includes(search) ||
+                   (interview.student_id && interview.student_id.toLowerCase().includes(search)) ||
+                   (interview.student_batch_id && interview.student_batch_id.toLowerCase().includes(search))
+               );
+           }
+       },
+
+       filterInterviews() {
+           if (!this.searchInterviews.trim()) {
+               this.filteredInterviews = this.interviews;
+           } else {
+               const search = this.searchInterviews.toLowerCase().trim();
+               this.filteredInterviews = this.interviews.filter(interview =>
+                   interview.student_name.toLowerCase().includes(search) ||
+                   interview.student_email.toLowerCase().includes(search) ||
+                   (interview.student_id && interview.student_id.toLowerCase().includes(search)) ||
+                   interview.status.toLowerCase().includes(search) ||
+                   (interview.student_batch_id && interview.student_batch_id.toLowerCase().includes(search))
+               );
+           }
+       },
+
+       filterStudents() {
+           if (!this.searchStudents.trim()) {
+               this.filteredStudents = this.students;
+           } else {
+               const search = this.searchStudents.toLowerCase().trim();
+               this.filteredStudents = this.students.filter(student =>
+                   student.full_name.toLowerCase().includes(search) ||
+                   student.email.toLowerCase().includes(search) ||
+                   (student.student_id && student.student_id.toLowerCase().includes(search)) ||
+                   (student.batch_id && student.batch_id.toLowerCase().includes(search))
+               );
+           }
+       },
+
+       loadInterviews() {
+           console.log('Loading interviews...');
+           return fetch('/interview/api/get_interviews_list/', {
+               method: 'GET',
+               headers: {
+                   'X-CSRFToken': getCookie('csrftoken')
+               }
+           })
+           .then(response => {
+               console.log('Interviews response status:', response.status);
+               if (!response.ok) {
+                   throw new Error(`HTTP error! status: ${response.status}`);
+               }
+               return response.json();
+           })
+           .then(data => {
+               console.log('Interviews loaded:', data.length);
+               this.interviews = data;
+               this.pendingRequests = data.filter(interview => interview.status === 'requested');
+               console.log('Pending requests:', this.pendingRequests.length);
+           })
+           .catch(error => {
+               console.error('Error loading interviews:', error);
+               showNotification('Failed to load interviews: ' + error.message, 'error');
+           });
+       },
+
+       loadStudents() {
+           console.log('Loading students...');
+           return fetch('/api/students/', {
+               method: 'GET',
+               headers: {
+                   'X-CSRFToken': getCookie('csrftoken')
+               }
+           })
+           .then(response => {
+               console.log('Students response status:', response.status);
+               if (!response.ok) {
+                   throw new Error(`HTTP error! status: ${response.status}`);
+               }
+               return response.json();
+           })
+           .then(data => {
+               console.log('Students loaded:', data.length);
+               this.students = data;
+           })
+           .catch(error => {
+               console.error('Error loading students:', error);
+               showNotification('Failed to load students: ' + error.message, 'error');
+           });
+       },
+
+       refreshData() {
+           console.log('Refreshing data...');
+           this.loadDashboardData();
+           showNotification('Data refreshed', 'success');
+       },
+
+       // Availability Modal Functions
+//       showAvailabilityModal(interview) {
+//         console.log('Showing availability modal for:', interview);
+//         this.selectedStudent = interview;
+//           this.showAvailabilityModalFlag = true;
+//       },
+
+        showAvailabilityModal(item) {
+    console.log('Showing availability modal for:', item);
+
+    // Normalize the data structure to handle both interview and student objects
+    this.selectedStudent = {
+        ...item,
+        // Ensure all possible field names are available
+        student_name: item.student_name || item.full_name || item.name,
+        student_email: item.student_email || item.email,
+        student_id: item.student_id,
+        student_batch_id: item.student_batch_id || item.batch_id,
+        student_preference: item.student_preference || item.interview_preference,
+        student_availability_summary: item.student_availability_summary || item.availability_summary,
+        student_availability_slots: item.student_availability_slots || item.availability_slots || [],
+        has_complete_availability: item.has_complete_availability,
+        availability_updated_at: item.availability_updated_at
+    };
+
+    console.log('Normalized student data:', this.selectedStudent);
+    console.log('Availability slots:', this.selectedStudent.student_availability_slots);
+    this.showAvailabilityModalFlag = true;
+},
+
+       showStudentAvailabilityModal(student) {
+           console.log('Showing student availability modal for:', student);
+           this.selectedStudent = student;
+           this.showAvailabilityModalFlag = true;
+       },
+
+       contactStudent(student) {
+           const email = student.student_email || student.email;
+           const subject = 'Complete Your Interview Availability Information';
+           const body = `Dear ${student.student_name || student.full_name},\n\nWe noticed that your availability information for mock interviews is incomplete. Please log into your dashboard and complete your availability details to proceed with interview scheduling.\n\nThank you.`;
+
+           const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+           window.open(mailtoLink, '_blank');
+       },
+
+        // IST utility functions
+        formatISTTime(dateString) {
+    if (!dateString) return 'Not Set';
+    const date = new Date(dateString);
+    return date.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+        }) + ' IST';
+        },
+
+        getCurrentISTForInput() {
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    istTime.setHours(istTime.getHours() + 1);
+
+    const year = istTime.getFullYear();
+    const month = (istTime.getMonth() + 1).toString().padStart(2, '0');
+    const day = istTime.getDate().toString().padStart(2, '0');
+    const hours = istTime.getHours().toString().padStart(2, '0');
+    const minutes = istTime.getMinutes().toString().padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+        },
+
+        // UPDATE existing formatDate function
+        formatDate(dateString) {
+        return this.formatISTTime(dateString);
+        },
+       getStatusClass(status) {
+           const classes = {
+               'requested': 'bg-yellow-100 text-yellow-800',
+               'approved': 'bg-blue-100 text-blue-800',
+               'scheduled': 'bg-purple-100 text-purple-800',
+               'in_progress': 'bg-indigo-100 text-indigo-800',
+               'completed': 'bg-green-100 text-green-800',
+               'cancelled': 'bg-red-100 text-red-800',
+               'expired': 'bg-red-100 text-red-800'
+           };
+           return classes[status] || 'bg-gray-100 text-gray-800';
+       },
+
+       getStatusDisplay(status) {
+           const displays = {
+               'requested': 'Requested',
+               'approved': 'Approved',
+               'scheduled': 'Scheduled',
+               'in_progress': 'In Progress',
+               'completed': 'Completed',
+               'cancelled': 'Cancelled',
+               'expired': 'Expired'
+           };
+           return displays[status] || status;
+       },
+
+        showApprovalModal(interview) {
+        console.log('Showing approval modal for interview:', interview.id);
+        this.selectedInterview = interview;
+
+        // Set minimum datetime to 1 hour from now in IST
+        const minDateTime = this.getCurrentISTForInput();
+
+        this.approvalData = {
+                scheduled_at: minDateTime,
+                admin_notes: ''
+         };
+
+        this.showApprovalModalFlag = true;
+        },
+       showRejectionModal(interview) {
+           console.log('Showing rejection modal for interview:', interview.id);
+           this.selectedInterview = interview;
+           this.rejectionData = {
+               admin_notes: ''
+           };
+           this.showRejectionModalFlag = true;
+       },
+
+approveInterview() {
+    console.log('Approving interview:', this.selectedInterview.id);
+    console.log('Approval data:', this.approvalData);
+
+    // Validate scheduled time
+    const scheduledTime = new Date(this.approvalData.scheduled_at);
+    const now = new Date();
+
+    if (scheduledTime <= now) {
+        showNotification('Scheduled time must be in the future', 'error');
+        return;
+    }
+
+    fetch(`/interview/api/interviews/${this.selectedInterview.id}/approve/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(this.approvalData)
+    })
+    .then(response => {
+        console.log('Approval response status:', response.status);
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+    })
+    .then(result => {
+        console.log('Interview approved successfully:', result);
+
+        // Show IST scheduling information
+        const successMessage = result.message || 'Interview approved successfully';
+        showNotification(successMessage, 'success');
+
+        this.showApprovalModalFlag = false;
+        this.loadInterviews().then(() => {
+            this.calculateStats();
+            this.filterRequests();
+            this.filterInterviews();
+        });
+    })
+    .catch(error => {
+        console.error('Error approving interview:', error);
+        let errorMessage = error.error || 'Failed to approve interview';
+        showNotification(errorMessage, 'error');
+    });
+},
+       rejectInterview() {
+           console.log('Rejecting interview:', this.selectedInterview.id);
+
+           fetch(`/interview/api/interviews/${this.selectedInterview.id}/reject/`, {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json',
+                   'X-CSRFToken': getCookie('csrftoken')
+               },
+               body: JSON.stringify(this.rejectionData)
+           })
+           .then(response => {
+               console.log('Rejection response status:', response.status);
+               if (!response.ok) {
+                   return response.json().then(err => Promise.reject(err));
+               }
+               return response.json();
+           })
+           .then(result => {
+               console.log('Interview rejected successfully:', result);
+               showNotification('Interview request rejected', 'success');
+               this.showRejectionModalFlag = false;
+               this.loadInterviews().then(() => {
+                   this.calculateStats();
+                   this.filterRequests();
+                   this.filterInterviews();
+               });
+           })
+           .catch(error => {
+               console.error('Error rejecting interview:', error);
+               showNotification(error.error || 'Failed to reject interview', 'error');
+           });
+       },
+
+       viewReport(interviewId) {
+           window.open(`/interview/results/${interviewId}/`, '_blank');
+       },
+
+       deleteInterview(interviewId) {
+           if (confirm('Are you sure you want to delete this interview? This action cannot be undone.')) {
+               fetch(`/api/interviews/${interviewId}/delete/`, {
+                   method: 'POST',
+                   headers: {
+                       'X-CSRFToken': getCookie('csrftoken')
+                   }
+               })
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error('Failed to delete interview');
+                   }
+                   return response.json();
+               })
+               .then(result => {
+                   this.loadInterviews().then(() => {
+                       this.calculateStats();
+                       this.filterInterviews();
+                   });
+                   showNotification('Interview deleted successfully', 'success');
+               })
+               .catch(error => {
+                   console.error('Error deleting interview:', error);
+                   showNotification('Failed to delete interview', 'error');
+               });
+           }
+       },
+
+       toggleStudentStatus(studentId) {
+           fetch(`/api/students/${studentId}/toggle-status/`, {
+               method: 'POST',
+               headers: {
+                   'X-CSRFToken': getCookie('csrftoken')
+               }
+           })
+           .then(response => {
+               if (!response.ok) {
+                   throw new Error('Failed to toggle student status');
+               }
+               return response.json();
+           })
+           .then(result => {
+               this.loadStudents().then(() => {
+                   this.filterStudents();
+               });
+               showNotification(result.message, 'success');
+           })
+           .catch(error => {
+               console.error('Error toggling student status:', error);
+               showNotification('Failed to update student status', 'error');
+           });
+       },
+
+       deleteStudent(studentId) {
+           if (confirm('Are you sure you want to deactivate this student? They will not be able to login.')) {
+               fetch(`/api/students/${studentId}/delete/`, {
+                   method: 'POST',
+                   headers: {
+                       'X-CSRFToken': getCookie('csrftoken')
+                   }
+               })
+               .then(response => {
+                   if (!response.ok) {
+                       throw new Error('Failed to deactivate student');
+                   }
+                   return response.json();
+               })
+               .then(result => {
+                   this.loadStudents().then(() => {
+                       this.calculateStats();
+                       this.filterStudents();
+                   });
+                   showNotification('Student deactivated successfully', 'success');
+               })
+               .catch(error => {
+                   console.error('Error deactivating student:', error);
+                   showNotification('Failed to deactivate student', 'error');
+               });
+           }
+       },
+
+viewVideoRecording(interviewId) {
+    console.log('Opening video recording for interview:', interviewId);
+
+    // First check if video is available - with enhanced debugging
+    fetch(`/interview/api/video-info/${interviewId}/`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Video info response:', data);
+            console.log('Debug info:', data.debug_info);
+            
+            // Enhanced debugging - show session IDs
+            if (data.debug_info) {
+                console.log('Frame Session ID:', data.debug_info.frame_session_id);
+                console.log('Video Session ID:', data.debug_info.video_session_id);
+                console.log('Kafka Available:', data.debug_info.kafka_available);
+            }
+            
+            if (data.success && data.video_available && data.total_chunks > 0) {
+                this.showVideoPlayerModal(interviewId, data);
+            } else {
+                // More detailed error message
+                let errorDetails = '';
+                if (data.debug_info) {
+                    errorDetails = `
+                        Frame Session: ${data.debug_info.frame_session_id || 'None'}
+                        Video Session: ${data.debug_info.video_session_id || 'None'}
+                        Total Chunks: ${data.total_chunks || 0}
+                        Kafka Available: ${data.debug_info.kafka_available}
+                    `;
+                }
+                showNotification(`No video recording available.\n${errorDetails}`, 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Error checking video availability:', error);
+            showNotification('Error checking video availability: ' + error.message, 'error');
+        });
+},
+
+showVideoPlayerModal(interviewId, videoInfo) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('videoPlayerModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create modal HTML
+    const modalHTML = `
+        <div id="videoPlayerModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4">
+            <div class="bg-gray-800 rounded-lg max-w-6xl w-full max-h-screen overflow-hidden">
+<!-- Header -->
+<div class="p-4 border-b border-gray-600 flex justify-between items-center">
+    <div>
+        <h2 class="text-xl font-bold text-white">📹 Interview Recording</h2>
+        <p class="text-gray-300">
+            <strong>Student:</strong> ${videoInfo.interview_info.student_name} |
+            <strong>Attempt:</strong> #${videoInfo.interview_info.attempt_number} |
+            <strong>Chunks:</strong> ${videoInfo.total_chunks}
+        </p>
+        <p class="text-xs text-gray-400 mt-1">
+            Frame Session: ${videoInfo.debug_info?.frame_session_id || 'None'} |
+            Video Session: ${videoInfo.debug_info?.video_session_id || 'Unknown'}
+        </p>
+    </div>
+    <button onclick="document.getElementById('videoPlayerModal').remove()"
+            class="text-gray-400 hover:text-white text-2xl">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+                <!-- Video Container -->
+                <div class="p-4">
+                    <div class="relative bg-black rounded-lg overflow-hidden mb-4">
+                        <video id="interviewVideoPlayer" controls preload="metadata" class="w-full h-96">
+                            <source src="/interview/api/kafka-video/${interviewId}/" type="video/webm">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <!-- Loading Overlay -->
+                        <div id="videoLoadingOverlay" class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
+                            <div class="text-center text-white">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                                <p>Loading video from Kafka...</p>
+                                <p class="text-sm text-gray-400 mt-2">Reconstructing ${videoInfo.total_chunks} chunks</p>
+                                <p class="text-xs text-gray-500 mt-1">This may take up to 30 seconds</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div class="bg-gray-700 p-3 rounded text-center">
+                            <div class="text-blue-400 font-semibold">Duration</div>
+                            <div class="text-white" id="videoDurationDisplay">Loading...</div>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded text-center">
+                            <div class="text-green-400 font-semibold">Chunks</div>
+                            <div class="text-white">${videoInfo.total_chunks}</div>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded text-center">
+                            <div class="text-yellow-400 font-semibold">Status</div>
+                            <div class="text-white">${videoInfo.debug_info?.kafka_available ? 'Kafka Connected' : 'Kafka Error'}</div>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded text-center">
+                            <div class="text-purple-400 font-semibold">Source</div>
+                            <div class="text-white">Kafka Stream</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-center space-x-4">
+                        <a href="/interview/api/kafka-video/${interviewId}/" 
+                           download="interview_${interviewId}.webm"
+                           class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white">
+                            <i class="fas fa-download mr-2"></i>Download Recording
+                        </a>
+                        <button onclick="this.toggleFullscreenVideo()" 
+                                class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">
+                            <i class="fas fa-expand mr-2"></i>Fullscreen
+                        </button>
+                        <button onclick="document.getElementById('videoPlayerModal').remove()" 
+                                class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white">
+                            <i class="fas fa-times mr-2"></i>Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Setup video event listeners
+    this.setupVideoPlayer();
+},
+
+setupVideoPlayer() {
+    const video = document.getElementById('interviewVideoPlayer');
+    const loadingOverlay = document.getElementById('videoLoadingOverlay');
+    const durationDisplay = document.getElementById('videoDurationDisplay');
+
+    if (!video || !loadingOverlay) return;
+
+    video.addEventListener('loadstart', function() {
+        console.log('Video loading started');
+        loadingOverlay.style.display = 'flex';
+    });
+
+    video.addEventListener('loadedmetadata', function() {
+        console.log('Video metadata loaded');
+        const duration = Math.round(video.duration);
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+        if (durationDisplay) {
+            durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+    });
+
+    video.addEventListener('canplay', function() {
+        console.log('Video can start playing');
+        loadingOverlay.style.display = 'none';
+    });
+
+    video.addEventListener('error', function(e) {
+        console.error('Video error:', e);
+        loadingOverlay.innerHTML = `
+            <div class="text-center text-white">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                <p class="text-red-400 font-semibold">Error Loading Video</p>
+                <p class="text-gray-400 mt-2">The video may still be processing in Kafka</p>
+                <p class="text-gray-400">or there may be a connection issue.</p>
+                <button onclick="location.reload()" class="mt-4 bg-blue-600 px-4 py-2 rounded text-white">
+                    Refresh Page
+                </button>
+            </div>
+        `;
+    });
+
+    // Timeout after 45 seconds
+    setTimeout(() => {
+        if (loadingOverlay && loadingOverlay.style.display !== 'none') {
+            loadingOverlay.innerHTML = `
+                <div class="text-center text-white">
+                    <i class="fas fa-clock text-4xl text-yellow-400 mb-4"></i>
+                    <p class="text-yellow-400 font-semibold">Loading Timeout (45s)</p>
+                    <p class="text-gray-400 mt-2">Video may still be processing in Kafka</p>
+                    <p class="text-gray-400">or chunks may be corrupted.</p>
+                    <button onclick="location.reload()" class="mt-4 bg-blue-600 px-4 py-2 rounded text-white">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }, 45000);
+},
+
+// Add this function to your admin dashboard JavaScript
+debugVideoSession(interviewId) {
+    fetch(`/interview/api/video-info/${interviewId}/`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('=== VIDEO DEBUG INFO ===');
+            console.log('Interview ID:', interviewId);
+            console.log('Video Available:', data.video_available);
+            console.log('Total Chunks:', data.total_chunks);
+            console.log('Frame Session ID:', data.debug_info?.frame_session_id);
+            console.log('Video Session ID:', data.debug_info?.video_session_id);
+            console.log('Kafka Available:', data.debug_info?.kafka_available);
+            console.log('Error Message:', data.debug_info?.error_message);
+            console.log('=========================');
+        });
+},
+
+toggleFullscreenVideo() {
+    const video = document.getElementById('interviewVideoPlayer');
+    if (video) {
+        if (!document.fullscreenElement) {
+            video.requestFullscreen().catch(err => {
+                console.error('Error attempting to enable fullscreen:', err);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+}
+        
+   }
+   
+}
+
+// Helper function to show notifications
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+        type === 'success' ? 'bg-green-600' :
+        type === 'error' ? 'bg-red-600' :
+        type === 'warning' ? 'bg-yellow-600' :
+        'bg-blue-600'
+    }`;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+}
+            
+// Helper function to get CSRF token
+function getCookie(name) {
+   let cookieValue = null;
+   if (document.cookie && document.cookie !== '') {
+       const cookies = document.cookie.split(';');
+       for (let i = 0; i < cookies.length; i++) {
+           const cookie = cookies[i].trim();
+           if (cookie.substring(0, name.length + 1) === (name + '=')) {
+               cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+               break;
+           }
+       }
+   }
+   return cookieValue;
+}
+</script>
+{% endblock %}
+

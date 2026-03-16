@@ -1,0 +1,18 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<div class="container">
+<h2>Skill Matching Result</h2>
+
+<p><b>Required Skills:</b> {{ required_skills }}</p>
+
+<p><b>Matched Skills:</b> {{ matched_skills }}</p>
+
+<p><b>Match Score:</b> {{ match_score }}%</p>
+{% if matched_skills %}
+    <h3 style="color:green;">Candidate Shortlisted</h3>
+{% else %}
+    <h3 style="color:red;">Candidate Rejected</h3>
+{% endif %}
+</div>

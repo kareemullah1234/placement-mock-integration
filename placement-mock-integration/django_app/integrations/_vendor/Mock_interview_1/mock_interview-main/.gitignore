@@ -1,0 +1,147 @@
+# ============================================
+# Mock Interview Platform - .gitignore
+# ============================================
+
+# ================= Python =================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Build / packaging
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ================= Virtual Environments =================
+env/
+venv/
+ENV/
+.venv/
+venv311/
+**/venv/
+**/venv311/
+
+# ================= Environment & Secrets =================
+.env
+.env.local
+.env.*
+*.env
+.envrc
+
+# ================= API Keys =================
+**/secrets.py
+**/credentials.py
+
+# ================= Django =================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# ================= Certificates / SSL =================
+*.crt
+*.key
+selfsigned.*
+cert.*
+
+# ================= IDE =================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ================= Logs =================
+logs/
+*.log
+*.log.*
+
+# ================= Temporary =================
+*.tmp
+*.temp
+*.bak
+*.backup
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# ================= OS Files =================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ================= Jupyter =================
+.ipynb_checkpoints/
+*.ipynb
+
+# ================= Generated Interview Data =================
+mock_interview_latest/app/interview_sessions/*.json
+dlib_video/interview_results/*.json
+dlib_video/logs/
+dlib_video/COMBINED_*.json
+
+# ================= Audio =================
+*.webm
+*.wav
+*.mp3
+*.ogg
+*.flac
+*.aac
+*.m4a
+
+**/audio/
+**/recordings/
+**/audio_responses/
+
+# ================= Video =================
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# ================= ML Models =================
+*.dat
+*.pkl
+*.h5
+*.model
+
+# ================= Node =================
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ================= Archives =================
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tar.xz
+
+# ================= Accidental Nested Projects =================
+mock_interview_latest/mock_interview-main/
+mock_interview_latest/app/app/
+
+# ================= Binary =================
+*.exe
+*.dll
+*.o
+*.class

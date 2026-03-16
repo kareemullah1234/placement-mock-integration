@@ -1,0 +1,8 @@
+App: common
+
+Model: TimeStampedModel (abstract)
+- created_at: DateTimeField(auto_now_add=True)
+- updated_at: DateTimeField(auto_now=True)
+
+Notes:
+- This is an abstract base model and does not create its own database table.

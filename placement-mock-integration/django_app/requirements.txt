@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Merged requirements.txt
+# PlacementPortal + Mock Interview dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Core Django ───────────────────────────────────────────────────────────
+Django>=5.0
+mysqlclient>=2.2.0
+gunicorn>=21.2.0
+python-dotenv>=1.0.0
+
+# ── PDF / Resume ──────────────────────────────────────────────────────────
+PyPDF2>=3.0.0
+reportlab>=4.0.0
+
+# ── HTTP ──────────────────────────────────────────────────────────────────
+requests>=2.31.0
+
+# ── Time ──────────────────────────────────────────────────────────────────
+pytz>=2025.2
+
+# ── Big Data / Messaging ──────────────────────────────────────────────────
+hdfs>=2.7.0
+kafka-python>=2.0.2
+
+# ── AI / ML APIs ──────────────────────────────────────────────────────────
+google-genai>=1.0.0
+
+# ── Text-to-Speech ────────────────────────────────────────────────────────
+gTTS>=2.5.0
+
+# ── Speech-to-Text (local Whisper) ────────────────────────────────────────
+# Requires libgomp1 system package (install in Dockerfile)
+faster-whisper>=1.0.0
+
+# ── Audio processing ──────────────────────────────────────────────────────
+# Requires portaudio19-dev system package (install in Dockerfile)
+PyAudio>=0.2.14
+pydub>=0.25.1
+SpeechRecognition>=3.14.0
+
+# ── Audio / Video numpy ops ───────────────────────────────────────────────
+numpy>=1.26.0
+
+# ── Video frame processing (headless = no display required in server) ──────
+opencv-python-headless>=4.8.0
+
+# ── WebSockets (for real-time features) ───────────────────────────────────
+websockets>=12.0

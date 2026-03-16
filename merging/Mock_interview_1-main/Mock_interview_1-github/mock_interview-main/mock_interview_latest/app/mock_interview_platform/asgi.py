@@ -1,0 +1,24 @@
+"""
+ASGI config for mock_interview_platform project.
+
+It exposes the ASGI callable as a module-level variable named ``application``.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
+"""
+
+import os
+
+from django.core.asgi import get_asgi_application
+
+try:
+    import pymysql
+except ModuleNotFoundError:
+    pymysql = None
+
+if pymysql is not None:
+    pymysql.install_as_MySQLdb()
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mock_interview_platform.settings')
+
+application = get_asgi_application()
