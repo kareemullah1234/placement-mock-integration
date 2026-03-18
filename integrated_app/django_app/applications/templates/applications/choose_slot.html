@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,37 +14,53 @@
             background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
             min-height: 100vh;
         }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
+
         .slot-btn {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .slot-btn:hover {
             background: rgba(59, 130, 246, 0.1);
             border-color: rgba(59, 130, 246, 0.5);
             transform: translateY(-2px);
         }
+
         .animate-pulse-slow {
             animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+
         @keyframes pulse {
-            0%, 100% { opacity: 0.1; }
-            50% { opacity: 0.3; }
+
+            0%,
+            100% {
+                opacity: 0.1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }
     </style>
 </head>
+
 <body class="relative overflow-y-auto flex items-start justify-center py-12 px-4">
     <!-- Background Decor -->
-    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow"></div>
-    <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay: 2s"></div>
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow">
+    </div>
+    <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow"
+        style="animation-delay: 2s"></div>
 
     <div class="w-full max-w-2xl relative z-10">
         <div class="text-center mb-10">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600/10 rounded-2xl border border-blue-500/20 mb-6">
+            <div
+                class="inline-flex items-center justify-center w-16 h-16 bg-blue-600/10 rounded-2xl border border-blue-500/20 mb-6">
                 <i class="fas fa-calendar-alt text-3xl text-blue-500"></i>
             </div>
             <h1 class="text-4xl font-extrabold text-white tracking-tight mb-3">Schedule Your Test</h1>
@@ -53,10 +70,12 @@
         <div class="glass-card rounded-3xl p-8 sm:p-12">
             <form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {% csrf_token %}
-                
+
                 <!-- Option Now -->
-                <button type="submit" name="slot" value="now" class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
-                    <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <button type="submit" name="slot" value="now"
+                    class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
+                    <div
+                        class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fas fa-bolt text-xl text-emerald-500"></i>
                     </div>
                     <span class="text-white font-bold text-lg mb-1 text-center">Start Now</span>
@@ -64,8 +83,10 @@
                 </button>
 
                 <!-- Option 10 Min -->
-                <button type="submit" name="slot" value="10min" class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
-                    <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <button type="submit" name="slot" value="10min"
+                    class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
+                    <div
+                        class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fas fa-clock text-xl text-blue-500"></i>
                     </div>
                     <span class="text-white font-bold text-lg mb-1 text-center">In 10 Minutes</span>
@@ -73,8 +94,10 @@
                 </button>
 
                 <!-- Option 1 Day -->
-                <button type="submit" name="slot" value="1day" class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
-                    <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <button type="submit" name="slot" value="1day"
+                    class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
+                    <div
+                        class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fas fa-sun text-xl text-purple-500"></i>
                     </div>
                     <span class="text-white font-bold text-lg mb-1 text-center">Tomorrow</span>
@@ -82,8 +105,10 @@
                 </button>
 
                 <!-- Option 2 Days -->
-                <button type="submit" name="slot" value="2days" class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
-                    <div class="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <button type="submit" name="slot" value="2days"
+                    class="slot-btn group flex flex-col items-center p-8 bg-slate-900/40 border border-slate-700 rounded-2xl text-left hover:shadow-2xl hover:shadow-blue-500/10">
+                    <div
+                        class="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fas fa-calendar-day text-xl text-amber-500"></i>
                     </div>
                     <span class="text-white font-bold text-lg mb-1 text-center">After 2 Days</span>
@@ -95,7 +120,8 @@
                 <i class="fas fa-info-circle text-blue-500 mt-1"></i>
                 <div class="text-sm">
                     <p class="text-blue-200 font-semibold mb-1">Important Note</p>
-                    <p class="text-slate-400 leading-relaxed">The technical assessment is time-bound. Ensure you have a stable internet connection and a quiet environment before starting your chosen slot.</p>
+                    <p class="text-slate-400 leading-relaxed">The technical assessment is time-bound. Ensure you have a
+                        stable internet connection and a quiet environment before starting your chosen slot.</p>
                 </div>
             </div>
         </div>
@@ -105,4 +131,5 @@
         </p>
     </div>
 </body>
+
 </html>
