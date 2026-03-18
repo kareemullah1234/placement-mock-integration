@@ -1,0 +1,14 @@
+App: assessments
+
+Model: AptitudeTest
+- job: OneToOneField(JobPost, on_delete=CASCADE)
+- total_questions: IntegerField
+- total_marks: IntegerField
+- passing_marks: IntegerField
+- created_at: DateTimeField(auto_now_add=True)
+
+Model: CandidateTestAttempt
+- application: OneToOneField(Application, on_delete=CASCADE)
+- score: IntegerField
+- passed: BooleanField
+- attempted_at: DateTimeField(auto_now_add=True)

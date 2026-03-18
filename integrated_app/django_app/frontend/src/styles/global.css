@@ -1,0 +1,358 @@
+/* Reset */
+
+body{
+font-family: Arial, Helvetica, sans-serif;
+background:#f5f7fb;
+margin:0;
+padding:0;
+}
+
+/* Navbar */
+
+.navbar{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:70px;
+background:#2563eb;
+color:white;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 30px;
+box-sizing: border-box;
+z-index:1000;
+}
+
+/* Navbar links */
+
+.nav-links{
+display:flex;
+align-items:center;
+gap:25px;
+}
+
+.nav-links a{
+color:white;
+text-decoration:none;
+font-weight:500;
+font-size:15px;
+}
+
+.nav-links a:hover{
+text-decoration:underline;
+}
+
+/* Main container below navbar */
+
+.main-container{
+margin-top:90px;
+padding:40px;
+}
+
+/* Center pages like login/register/profile */
+
+.page-container{
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:80vh;
+}
+
+/* Card box */
+
+.card{
+background:white;
+padding:40px;
+border-radius:10px;
+box-shadow:0px 4px 15px rgba(0,0,0,0.1);
+width:350px;
+}
+
+/* Titles */
+
+.card h2{
+text-align:center;
+margin-bottom:20px;
+}
+
+/* Inputs */
+
+.input-field{
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border:1px solid #ccc;
+border-radius:5px;
+font-size:14px;
+}
+
+/* File input spacing */
+
+.file-input{
+margin-bottom:20px;
+}
+
+/* Buttons */
+
+.btn{
+width:100%;
+padding:12px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:6px;
+font-size:15px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.btn:hover{
+background:#1e40af;
+}
+
+/* Login/Register links */
+
+.link{
+margin-top:15px;
+text-align:center;
+}
+
+.link a{
+color:#2563eb;
+text-decoration:none;
+font-weight:500;
+}
+
+.link a:hover{
+text-decoration:underline;
+}
+
+/* Dashboard */
+
+.dashboard-title{
+font-size:26px;
+margin-bottom:30px;
+}
+
+.dashboard-cards{
+display:flex;
+gap:30px;
+}
+
+.dashboard-card{
+background:white;
+padding:25px;
+border-radius:8px;
+box-shadow:0px 3px 10px rgba(0,0,0,0.1);
+width:200px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.dashboard-card:hover{
+transform:scale(1.05);
+}
+
+.dashboard-card h3{
+margin:0;
+margin-bottom:10px;
+font-size:18px;
+}
+
+.dashboard-card p{
+margin:0;
+color:#666;
+font-size:14px;
+}
+
+.logo{
+font-weight:600;
+font-size:18px;
+}
+
+.nav-links{
+display:flex;
+align-items:center;
+gap:25px;
+}
+
+.nav-links a{
+color:white;
+text-decoration:none;
+font-weight:500;
+}
+
+.logout-btn{
+background:transparent;
+border:none;
+color:white;
+font-size:15px;
+cursor:pointer;
+}
+
+.logout-btn:hover{
+text-decoration:underline;
+}
+
+.admin-table{
+width:100%;
+border-collapse:collapse;
+margin-top:25px;
+background:white;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0px 5px 15px rgba(0,0,0,0.15);
+}
+
+/* header */
+
+.admin-table th{
+background:#1e40af;
+color:white;
+padding:14px;
+font-size:15px;
+text-align:left;
+}
+
+/* rows */
+
+.admin-table td{
+padding:14px;
+border-bottom:1px solid #e5e7eb;
+}
+
+/* alternate row color */
+
+.admin-table tr:nth-child(even){
+background:#f9fafb;
+}
+
+/* hover */
+
+.admin-table tr:hover{
+background:#eef2ff;
+}
+
+/* resume button */
+
+.resume-btn{
+background:#2563eb;
+color:white;
+padding:6px 12px;
+border-radius:5px;
+text-decoration:none;
+font-size:13px;
+}
+
+.resume-btn:hover{
+background:#1e3a8a;
+}
+
+/* welcome */
+
+.welcome-title{
+font-size:28px;
+margin-bottom:10px;
+}
+
+.quote{
+color:#555;
+font-style:italic;
+margin-bottom:30px;
+}
+
+/* footer */
+
+.dashboard-footer{
+margin-top:60px;
+padding:25px;
+background:#f1f5f9;
+border-radius:8px;
+text-align:center;
+}
+
+.dashboard-footer h4{
+color:#1e40af;
+margin-bottom:10px;
+}
+
+.dashboard-footer p{
+margin:5px 0;
+color:#555;
+}
+
+.dashboard-container{
+padding:40px;
+}
+
+/* welcome */
+
+.welcome-title{
+font-size:28px;
+margin-bottom:10px;
+}
+
+.quote{
+font-style:italic;
+color:#555;
+margin-bottom:30px;
+}
+
+/* layout */
+
+.dashboard-layout{
+display:flex;
+gap:40px;
+}
+
+/* left cards */
+
+.dashboard-left{
+display:flex;
+flex-direction:column;
+gap:20px;
+width:300px;
+}
+
+/* right section */
+
+.dashboard-right{
+flex:1;
+display:flex;
+flex-direction:column;
+gap:20px;
+}
+
+/* info card */
+
+.info-card{
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0px 5px 15px rgba(0,0,0,0.1);
+}
+
+/* existing cards */
+
+.dashboard-card{
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0px 5px 15px rgba(0,0,0,0.1);
+cursor:pointer;
+}
+
+.dashboard-card:hover{
+transform:translateY(-3px);
+}
+
+.applications-box{
+margin-top:30px;
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0px 5px 15px rgba(0,0,0,0.1);
+color:#555;
+}

@@ -1,0 +1,7 @@
+App: accounts
+
+Model: User (extends AbstractUser)
+- role: CharField(max_length=20, choices=[candidate, company, admin])
+
+Notes:
+- Uses Django's built-in auth user base (`AbstractUser`).

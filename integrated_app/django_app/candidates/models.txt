@@ -1,0 +1,11 @@
+App: candidates
+
+Model: CandidateProfile
+- user: OneToOneField(settings.AUTH_USER_MODEL, on_delete=CASCADE)
+- phone: CharField(max_length=15)
+- skills: TextField
+- education: TextField
+- experience: TextField
+- resume: FileField(upload_to='resumes/')
+- created_at: DateTimeField(auto_now_add=True)
+- updated_at: DateTimeField(auto_now=True)

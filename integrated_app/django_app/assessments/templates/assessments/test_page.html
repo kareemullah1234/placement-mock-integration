@@ -1,0 +1,237 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+
+<div class="container">
+<h2>Aptitude Test</h2>
+
+<form method="POST" action="{% url 'assessments:submit_test' application_id %}">
+{% csrf_token %}
+
+<input type="hidden" name="application_id" value="{{ application_id }}">
+
+<h3>Section 1 : Aptitude</h3>
+
+{% for q in questions.aptitude %}
+
+<p>{{ forloop.counter }}. {{ q.question }}</p>
+
+{% for option in q.options %}
+<input type="radio" name="apt{{ forloop.parentloop.counter }}" value="{{ option }}">
+{{ option }}<br>
+{% endfor %}
+
+<br>
+
+{% endfor %}
+
+<h3>Section 2 : Skill Questions</h3>
+
+{% for q in questions.skills %}
+
+<p>{{ forloop.counter }}. {{ q.question }}</p>
+
+{% for option in q.options %}
+<input type="radio" name="skill{{ forloop.parentloop.counter }}" value="{{ option }}">
+{{ option }}<br>
+{% endfor %}
+
+<br>
+
+{% endfor %}
+
+<h3>Section 3 : Communication</h3>
+
+{% for q in questions.communication %}
+
+<p>{{ forloop.counter }}. {{ q.question }}</p>
+
+<textarea name="comm{{ forloop.counter }}"></textarea>
+
+<br><br>
+
+{% endfor %}
+
+<h3>Coding Question</h3>
+
+{% for q in questions.coding %}
+
+<p><b>{{ q.question }}</b></p>
+
+<p><b>Example Input:</b> {{ q.example_input|safe }}</p>
+<p><b>Example Output:</b> {{ q.example_output|safe }}</p>
+
+<input type="hidden" id="testcases{{ forloop.counter }}" value='{{ q.test_cases|json_script:"testcases_json" }}'>
+
+<select id="language{{ forloop.counter }}" onchange="setTemplate({{ forloop.counter }})">
+<option value="71">Python</option>
+<option value="54">C++</option>
+<option value="62">Java</option>
+<option value="63">JavaScript</option>
+</select>
+
+<br><br>
+
+<textarea id="code{{ forloop.counter }}" rows="10" cols="80"></textarea>
+
+<br><br>
+
+<button type="button" onclick="runCode({{ forloop.counter }}, '{{ q.function_name }}')">
+Run Code
+</button>
+
+<pre id="output{{ forloop.counter }}"></pre>
+
+<hr>
+
+{% endfor %}
+
+<button type="submit">Submit Test</button>
+
+</form>
+</div>
+
+<!-- SEND CODING QUESTIONS TO JAVASCRIPT -->
+<script>
+const codingQuestions = {{ questions.coding|safe }};
+</script>
+
+<script>
+
+function getCookie(name){
+let cookieValue=null;
+if(document.cookie && document.cookie!==''){
+const cookies=document.cookie.split(';');
+for(let i=0;i<cookies.length;i++){
+const cookie=cookies[i].trim();
+if(cookie.substring(0,name.length+1)===(name+'=')){
+cookieValue=decodeURIComponent(cookie.substring(name.length+1));
+break;
+}
+}
+}
+return cookieValue;
+}
+
+function getTemplate(language, functionName){
+
+if(language == 71){
+return `def ${functionName}(data):
+    # Write your code here
+
+    pass
+`
+}
+
+if(language == 54){
+return `#include <vector>
+#include <string>
+using namespace std;
+
+auto ${functionName}(auto data){
+
+    // Write your code here
+
+}
+`
+}
+
+if(language == 62){
+return `public static int ${functionName}(String data){
+
+    // Write your code here
+
+    return 0;
+}
+`
+}
+
+if(language == 63){
+return `function ${functionName}(data){
+
+    // Write your code here
+
+}
+`
+}
+
+}
+
+window.onload = function(){
+
+    const editors = document.querySelectorAll("textarea[id^='code']")
+
+    editors.forEach((editor,index)=>{
+
+        const functionName = codingQuestions[index].function_name
+
+        editor.value = getTemplate(71,functionName)
+
+    })
+}
+
+function setTemplate(i){
+
+    const language = document.getElementById("language"+i).value
+    const editor = document.getElementById("code"+i)
+
+    const functionName = codingQuestions[i-1].function_name
+
+    editor.value = getTemplate(language,functionName)
+}
+
+function runCode(i, functionName) {
+
+    const code = document.getElementById("code" + i).value;
+    const language = document.getElementById("language" + i).value;
+
+    // get raw testcase string
+    const testCases = codingQuestions[i-1].test_cases;
+
+    fetch("/assessments/run-code/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({
+            code: code,
+            language: language,
+            test_cases: testCases,
+            function_name: functionName
+        })
+    })
+
+.then(res => res.json())
+.then(data => {
+
+if(data.error){
+    document.getElementById("output"+i).innerText = data.error
+    return
+}
+
+let text = ""
+
+if(data.results){
+    data.results.forEach(r=>{
+        text += r + "\n"
+    })
+
+    text += "\nPassed: "+data.passed+"/"+data.total
+}
+
+document.getElementById("output"+i).innerText = text
+
+})
+}
+
+</script>
+
+</body>
+</html>

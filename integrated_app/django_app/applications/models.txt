@@ -1,0 +1,18 @@
+App: applications
+
+Model: Application
+- candidate: ForeignKey(CandidateProfile, on_delete=CASCADE)
+- job: ForeignKey(JobPost, on_delete=CASCADE)
+- status: CharField(max_length=20, choices=STATUS_CHOICES, default='applied')
+- applied_at: DateTimeField(auto_now_add=True)
+- updated_at: DateTimeField(auto_now=True)
+
+Status Choices:
+- applied
+- shortlisted
+- rejected
+- aptitude_passed
+- aptitude_failed
+- mock_passed
+- mock_failed
+- final_selected

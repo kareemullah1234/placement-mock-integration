@@ -1,0 +1,144 @@
+{% extends 'interviews/base.html' %}
+{% block content %}
+
+<style>
+    body {
+        background: #f4f6f9;
+    }
+
+    .results-container {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #ffffff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .results-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .results-header h2 {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .badge-status {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .score-card {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+
+    .score-box {
+        background: linear-gradient(135deg, #2563eb, #1e3a8a);
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        transition: 0.3s;
+    }
+
+    .score-box:hover {
+        transform: translateY(-5px);
+    }
+
+    .score-box h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-weight: 400;
+        opacity: 0.9;
+    }
+
+    .score-box p {
+        font-size: 26px;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .actions {
+        text-align: center;
+        margin-top: 40px;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: 0.3s;
+        display: inline-block;
+    }
+
+    .btn-primary:hover {
+        background: #1e40af;
+    }
+
+    .meta-info {
+        margin-top: 25px;
+        font-size: 14px;
+        color: #6b7280;
+        text-align: center;
+    }
+</style>
+
+<div class="results-container">
+
+    <div class="results-header">
+        <h2>Interview Results</h2>
+        <span class="badge-status">
+            {{ interview.status|title }}
+        </span>
+    </div>
+
+    <div class="score-card">
+
+        <div class="score-box">
+            <h3>Technical Score</h3>
+            <p>{{ interview.technical_score|default:"0" }} / 100</p>
+        </div>
+
+        <div class="score-box">
+            <h3>Communication</h3>
+            <p>{{ interview.communication_score|default:"0" }} / 100</p>
+        </div>
+
+        <div class="score-box">
+            <h3>Confidence</h3>
+            <p>{{ interview.confidence_score|default:"0" }} / 100</p>
+        </div>
+
+        <div class="score-box">
+            <h3>Overall Score</h3>
+            <p>{{ interview.overall_score|default:"0" }} / 100</p>
+        </div>
+
+    </div>
+
+    <div class="meta-info">
+        Attempt: {{ interview.attempt_number }} <br>
+        Completed At: {{ interview.completed_at }}
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'download_report' interview.id %}" class="btn-primary">
+            Download PDF Report
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

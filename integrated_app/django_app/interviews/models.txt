@@ -1,0 +1,9 @@
+App: interviews
+
+Model: MockInterview
+- application: OneToOneField(Application, on_delete=CASCADE)
+- scheduled_at: DateTimeField
+- score: IntegerField(null=True, blank=True)
+- feedback: TextField
+- passed: BooleanField
+- created_at: DateTimeField(auto_now_add=True)

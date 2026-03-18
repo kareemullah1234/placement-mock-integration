@@ -1,0 +1,27 @@
+# General Django Dependencies
+Django>=5.0
+mysqlclient>=2.2.0
+gunicorn>=21.2.0
+python-dotenv>=1.0.0
+django-cors-headers
+argon2-cffi
+pymysql
+PyPDF2
+google-generativeai
+
+# AI / Video / Audio Integration Dependencies
+opencv-python
+numpy
+flask
+scipy
+mysql-connector-python
+kafka-python
+# pyaudio  # <--- Commented out for local Windows installation
+# dlib     # <--- Commented out for local Windows installation
+SpeechRecognition
+pydub
+gTTS
+librosa
+soundfile
+requests
+pathlib

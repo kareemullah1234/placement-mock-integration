@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+{% load static %}
+
+<head>
+    <title>Candidate Profile</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Candidate Profile</h2>
+
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+
+<label>Mobile Number</label><br>
+<input type="text" name="phone" value="{{candidate.phone_number}}" required>
+
+<br><br>
+
+<label>Upload Resume</label><br>
+
+{% if candidate.resume %}
+<p><b>Current Resume:</b> 
+<a href="{{ candidate.resume.url }}" target="_blank">View Resume</a>
+</p>
+{% endif %}
+
+<input type="file" name="resume">
+
+<br><br>
+
+<button type="submit">Save Profile</button>
+
+</form>
+
+</div>
+
+</body>
+</html>
