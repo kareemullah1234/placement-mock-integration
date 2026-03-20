@@ -1,18 +1,115 @@
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Match Result | Placement Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .animate-pulse-slow {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body class="relative min-h-screen overflow-x-hidden pt-24">
+    <!-- Animated Background -->
+    <div class="fixed top-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow"></div>
+    <div class="fixed bottom-0 left-0 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" style="animation-delay: 2s"></div>
 
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Navigation -->
+    <nav class="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-slate-950/50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-rocket text-white"></i>
+                </div>
+                <span class="text-xl font-bold text-white tracking-tight">Placement<span class="text-blue-500">Portal</span></span>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="{% url 'candidate_dashboard' %}" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="{% url 'candidate_profile' %}" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Profile</a>
+                <div class="h-6 w-px bg-white/10 mx-2"></div>
+                <a href="{% url 'logout' %}" class="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-red-400 transition-colors">
+                    <i class="fas fa-sign-out-alt text-xs"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
 
-<div class="container">
-<h2>Skill Matching Result</h2>
+    <main class="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-blue-600/10 rounded-[2rem] border border-blue-500/20 mb-8 shadow-2xl shadow-blue-500/10">
+                <i class="fas fa-microchip text-4xl text-blue-500"></i>
+            </div>
+            <h1 class="text-5xl font-extrabold text-white tracking-tight mb-4">Skill Match Result</h1>
+            <p class="text-slate-400 text-lg">Our AI engine has evaluated your profile against the job requirements.</p>
+        </div>
 
-<p><b>Required Skills:</b> {{ required_skills }}</p>
+        <div class="glass-card rounded-[3rem] p-10 md:p-16 border-white/10 relative overflow-hidden group">
+            <div class="relative z-10 flex flex-col items-center">
+                <div class="relative w-48 h-48 flex items-center justify-center group/score mb-12">
+                    <div class="absolute inset-0 rounded-full border-8 border-white/5 shadow-inner"></div>
+                    <div class="text-center">
+                        <span class="text-6xl font-black text-white block">{{ match_score }}<span class="text-2xl text-blue-500">%</span></span>
+                        <span class="text-[10px] uppercase font-bold text-slate-500 tracking-[0.3em] mt-2 block">Match Score</span>
+                    </div>
+                </div>
 
-<p><b>Matched Skills:</b> {{ matched_skills }}</p>
+                <div class="text-center mb-12">
+                    {% if status == 'Shortlisted' %}
+                        <div class="inline-flex items-center gap-3 px-8 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl mb-4 group/badge scale-110">
+                            <i class="fas fa-check-circle text-emerald-500 animate-pulse"></i>
+                            <span class="text-emerald-500 font-extrabold text-xl uppercase tracking-widest">Shortlisted</span>
+                        </div>
+                        <p class="text-slate-400 text-lg max-w-sm mx-auto">Great news! Your profile meets the core technical requirements for this position.</p>
+                    {% else %}
+                        <div class="inline-flex items-center gap-3 px-8 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl mb-4 group/badge scale-110">
+                            <i class="fas fa-times-circle text-red-500 animate-pulse"></i>
+                            <span class="text-red-500 font-extrabold text-xl uppercase tracking-widest">Rejected</span>
+                        </div>
+                        <p class="text-slate-400 text-lg max-w-sm mx-auto">Unfortunately, your profile didn't meet the minimum match criteria for this role.</p>
+                    {% endif %}
+                </div>
 
-<p><b>Match Score:</b> {{ match_score }}%</p>
-{% if matched_skills %}
-    <h3 style="color:green;">Candidate Shortlisted</h3>
-{% else %}
-    <h3 style="color:red;">Candidate Rejected</h3>
-{% endif %}
-</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-12 text-left">
+                    <div class="bg-slate-950/40 p-8 rounded-3xl border border-white/5 space-y-4">
+                        <span class="text-xs uppercase font-bold tracking-[0.2em] text-blue-400 block">Required Skills</span>
+                        {% for skill in required_skills %}<span class="inline-block px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-sm font-bold text-slate-300 mr-2 mb-2">{{ skill|title }}</span>{% endfor %}
+                    </div>
+                    <div class="bg-slate-950/40 p-8 rounded-3xl border border-white/5 space-y-4">
+                        <span class="text-xs uppercase font-bold tracking-[0.2em] text-emerald-400 block">Matched Skills</span>
+                        {% for skill in matched_skills %}<span class="inline-block px-3 py-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-sm font-bold text-emerald-400 mr-2 mb-2">{{ skill|title }}</span>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="w-full flex flex-col gap-4 pt-10 border-t border-white/5">
+                    {% if status == 'Shortlisted' %}
+                        <a href="{% url 'candidate_dashboard' %}" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-6 rounded-3xl transition-all shadow-2xl flex items-center justify-center gap-4 group/btn">Technical Assessment <i class="fas fa-arrow-right group-hover/btn:translate-x-1"></i></a>
+                    {% else %}
+                        <a href="/companies/jobs/" class="w-full glass-card hover:bg-white/5 text-white font-black py-6 rounded-3xl transition-all flex items-center justify-center gap-4 group/btn">Explore Jobs <i class="fas fa-search group-hover/btn:scale-110"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

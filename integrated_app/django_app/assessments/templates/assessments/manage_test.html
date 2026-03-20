@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Test Config | Placement Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            transition: all 0.2s;
+        }
+        input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="relative flex items-center justify-center py-12 px-4 min-h-screen">
+    <div class="fixed top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" style="animation-delay: 2s"></div>
+
+    <div class="w-full max-w-xl relative z-10">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-10">
+            <div>
+                <a href="{% url 'companies:company_dashboard' %}" class="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center gap-2 mb-4 transition-colors">
+                    <i class="fas fa-arrow-left"></i> Back to Jobs
+                </a>
+                <h1 class="text-4xl font-extrabold text-white tracking-tight">Test Setup</h1>
+                <p class="text-slate-500 mt-2">Configuring assessment for <span class="text-blue-400 font-semibold">{{ job.title }}</span></p>
+            </div>
+            <div class="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-500/20">
+                <i class="fas fa-cog text-2xl text-blue-500"></i>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2.5rem] p-8 md:p-12">
+            <form method="POST" class="space-y-8">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="total_questions">Total AI Questions</label>
+                    <input type="number" id="total_questions" name="total_questions" value="{{ test.total_questions|default:10 }}" placeholder="e.g. 10">
+                    <p class="text-[10px] text-slate-500 mt-2 italic">Number of questions per section (Aptitude, Skills, Coding).</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label for="total_marks">Total Marks</label>
+                        <input type="number" id="total_marks" name="total_marks" value="{{ test.total_marks|default:100 }}" placeholder="e.g. 100">
+                    </div>
+                    <div>
+                        <label for="passing_marks">Passing Marks</label>
+                        <input type="number" id="passing_marks" name="passing_marks" value="{{ test.passing_marks|default:40 }}" placeholder="e.g. 40">
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <button type="submit" 
+                        class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2 group">
+                        Save Configuration
+                        <i class="fas fa-save text-xs group-hover:translate-y-[-2px] transition-transform"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-8 flex items-start gap-4 p-6 bg-blue-500/5 rounded-2xl border border-blue-500/10">
+            <div class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-500 text-sm"></i>
+            </div>
+            <p class="text-slate-500 text-xs leading-relaxed">
+                <span class="text-blue-200 font-bold block mb-1 uppercase tracking-widest">Recruiter Tip</span>
+                Setting the correct passing marks ensures high-quality filtering. The AI generates diverse questions based on the job's required skills.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

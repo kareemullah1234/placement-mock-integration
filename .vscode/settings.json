@@ -1,0 +1,10 @@
+{
+    "python.defaultInterpreterPath": "C:\\Python314\\python.exe",
+    "python.analysis.extraPaths": [
+        "./integrated_app/django_app"
+    ],
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingModuleSource": "none"
+    }
+}

@@ -1,237 +1,365 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aptitude Test | Placement Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .section-header {
+            border-left: 4px solid #3b82f6;
+            padding-left: 1.5rem;
+        }
+        input[type="radio"] {
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            top: 4px;
+        }
+        input[type="radio"]:checked {
+            border-color: #3b82f6;
+            background: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+        textarea, select {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+        }
+        textarea:focus, select:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .code-editor {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: #0f172a;
+            color: #34d399;
+        }
+        .animate-pulse-slow {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
 </head>
-
-<body>
-
-<div class="container">
-<h2>Aptitude Test</h2>
-
-<form method="POST" action="{% url 'assessments:submit_test' application_id %}">
-{% csrf_token %}
-
-<input type="hidden" name="application_id" value="{{ application_id }}">
-
-<h3>Section 1 : Aptitude</h3>
-
-{% for q in questions.aptitude %}
-
-<p>{{ forloop.counter }}. {{ q.question }}</p>
-
-{% for option in q.options %}
-<input type="radio" name="apt{{ forloop.parentloop.counter }}" value="{{ option }}">
-{{ option }}<br>
-{% endfor %}
-
-<br>
-
-{% endfor %}
-
-<h3>Section 2 : Skill Questions</h3>
-
-{% for q in questions.skills %}
-
-<p>{{ forloop.counter }}. {{ q.question }}</p>
-
-{% for option in q.options %}
-<input type="radio" name="skill{{ forloop.parentloop.counter }}" value="{{ option }}">
-{{ option }}<br>
-{% endfor %}
-
-<br>
-
-{% endfor %}
-
-<h3>Section 3 : Communication</h3>
-
-{% for q in questions.communication %}
-
-<p>{{ forloop.counter }}. {{ q.question }}</p>
-
-<textarea name="comm{{ forloop.counter }}"></textarea>
-
-<br><br>
-
-{% endfor %}
-
-<h3>Coding Question</h3>
-
-{% for q in questions.coding %}
-
-<p><b>{{ q.question }}</b></p>
-
-<p><b>Example Input:</b> {{ q.example_input|safe }}</p>
-<p><b>Example Output:</b> {{ q.example_output|safe }}</p>
-
-<input type="hidden" id="testcases{{ forloop.counter }}" value='{{ q.test_cases|json_script:"testcases_json" }}'>
-
-<select id="language{{ forloop.counter }}" onchange="setTemplate({{ forloop.counter }})">
-<option value="71">Python</option>
-<option value="54">C++</option>
-<option value="62">Java</option>
-<option value="63">JavaScript</option>
-</select>
-
-<br><br>
-
-<textarea id="code{{ forloop.counter }}" rows="10" cols="80"></textarea>
-
-<br><br>
-
-<button type="button" onclick="runCode({{ forloop.counter }}, '{{ q.function_name }}')">
-Run Code
-</button>
-
-<pre id="output{{ forloop.counter }}"></pre>
-
-<hr>
-
-{% endfor %}
-
-<button type="submit">Submit Test</button>
-
-</form>
-</div>
-
-<!-- SEND CODING QUESTIONS TO JAVASCRIPT -->
-<script>
-const codingQuestions = {{ questions.coding|safe }};
-</script>
-
-<script>
-
-function getCookie(name){
-let cookieValue=null;
-if(document.cookie && document.cookie!==''){
-const cookies=document.cookie.split(';');
-for(let i=0;i<cookies.length;i++){
-const cookie=cookies[i].trim();
-if(cookie.substring(0,name.length+1)===(name+'=')){
-cookieValue=decodeURIComponent(cookie.substring(name.length+1));
-break;
-}
-}
-}
-return cookieValue;
-}
-
-function getTemplate(language, functionName){
-
-if(language == 71){
-return `def ${functionName}(data):
-    # Write your code here
-
-    pass
-`
-}
-
-if(language == 54){
-return `#include <vector>
-#include <string>
-using namespace std;
-
-auto ${functionName}(auto data){
-
-    // Write your code here
-
-}
-`
-}
-
-if(language == 62){
-return `public static int ${functionName}(String data){
-
-    // Write your code here
-
-    return 0;
-}
-`
-}
-
-if(language == 63){
-return `function ${functionName}(data){
-
-    // Write your code here
-
-}
-`
-}
-
-}
-
-window.onload = function(){
-
-    const editors = document.querySelectorAll("textarea[id^='code']")
-
-    editors.forEach((editor,index)=>{
-
-        const functionName = codingQuestions[index].function_name
-
-        editor.value = getTemplate(71,functionName)
-
-    })
-}
-
-function setTemplate(i){
-
-    const language = document.getElementById("language"+i).value
-    const editor = document.getElementById("code"+i)
-
-    const functionName = codingQuestions[i-1].function_name
-
-    editor.value = getTemplate(language,functionName)
-}
-
-function runCode(i, functionName) {
-
-    const code = document.getElementById("code" + i).value;
-    const language = document.getElementById("language" + i).value;
-
-    // get raw testcase string
-    const testCases = codingQuestions[i-1].test_cases;
-
-    fetch("/assessments/run-code/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken")
-        },
-        body: JSON.stringify({
-            code: code,
-            language: language,
-            test_cases: testCases,
-            function_name: functionName
-        })
-    })
-
-.then(res => res.json())
-.then(data => {
-
-if(data.error){
-    document.getElementById("output"+i).innerText = data.error
-    return
-}
-
-let text = ""
-
-if(data.results){
-    data.results.forEach(r=>{
-        text += r + "\n"
-    })
-
-    text += "\nPassed: "+data.passed+"/"+data.total
-}
-
-document.getElementById("output"+i).innerText = text
-
-})
-}
-
-</script>
-
+<body class="relative overflow-y-auto py-12 px-4 flex flex-col items-center">
+    <!-- Background Decor -->
+    <div class="fixed top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none"></div>
+    <div class="fixed bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" style="animation-delay: 2s"></div>
+
+    <div class="w-full max-w-4xl relative z-10">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600/10 rounded-3xl border border-blue-500/20 mb-6">
+                <i class="fas fa-laptop-code text-4xl text-blue-500"></i>
+            </div>
+            <h1 class="text-5xl font-extrabold text-white tracking-tight mb-4">Technical Assessment</h1>
+            <p class="text-slate-400 text-lg">Complete all sections to showcase your expertise.</p>
+        </div>
+
+        <form method="POST" action="{% url 'assessments:submit_test' application_id %}" class="space-y-8">
+            {% csrf_token %}
+            <input type="hidden" name="application_id" value="{{ application_id }}">
+
+            <!-- Section 1: Aptitude -->
+            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                <div class="section-header mb-8">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-brain text-blue-400"></i>
+                        Section 1: Aptitude
+                    </h2>
+                    <p class="text-slate-500 text-sm mt-1">Logic and reasoning assessment</p>
+                </div>
+
+                <div class="space-y-10">
+                    {% for q in questions.aptitude %}
+                    <div class="bg-slate-900/40 rounded-2xl p-6 border border-white/5">
+                        <p class="text-lg text-slate-200 font-medium mb-6 flex gap-4">
+                            <span class="text-blue-500 font-bold">#{{ forloop.counter }}</span>
+                            {{ q.question }}
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {% for option in q.options %}
+                            <label class="flex items-center p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                                <input type="radio" name="apt{{ forloop.parentloop.counter }}" value="{{ option }}" required>
+                                <span class="text-slate-300 group-hover:text-white transition-colors">{{ option }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Section 2: Skill Questions -->
+            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                <div class="section-header mb-8">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-tools text-emerald-400"></i>
+                        Section 2: Skill Questions
+                    </h2>
+                    <p class="text-slate-500 text-sm mt-1">Core technical competency check</p>
+                </div>
+
+                <div class="space-y-10">
+                    {% for q in questions.skills %}
+                    <div class="bg-slate-900/40 rounded-2xl p-6 border border-white/5">
+                        <p class="text-lg text-slate-200 font-medium mb-6 flex gap-4">
+                            <span class="text-emerald-500 font-bold">#{{ forloop.counter }}</span>
+                            {{ q.question }}
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {% for option in q.options %}
+                            <label class="flex items-center p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                                <input type="radio" name="skill{{ forloop.parentloop.counter }}" value="{{ option }}" required>
+                                <span class="text-slate-300 group-hover:text-white transition-colors">{{ option }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Section 3: Communication -->
+            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                <div class="section-header mb-8">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-comments text-purple-400"></i>
+                        Section 3: Communication
+                    </h2>
+                    <p class="text-slate-500 text-sm mt-1">Written expression and soft skills</p>
+                </div>
+
+                <div class="space-y-10">
+                    {% for q in questions.communication %}
+                    <div class="bg-slate-900/40 rounded-2xl p-6 border border-white/5">
+                        <p class="text-lg text-slate-200 font-medium mb-6 flex gap-4">
+                            <span class="text-purple-500 font-bold">#{{ forloop.counter }}</span>
+                            {{ q.question }}
+                        </p>
+                        <textarea name="comm{{ forloop.counter }}" rows="4" 
+                            class="w-full rounded-xl p-4 resize-none transition-all placeholder-slate-600"
+                            placeholder="Type your response here..." required></textarea>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Section 4: Coding -->
+            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                <div class="section-header mb-8">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-code text-amber-400"></i>
+                        Coding Challenge
+                    </h2>
+                    <p class="text-slate-500 text-sm mt-1">Algorithm implementation and problem solving</p>
+                </div>
+
+                <div class="space-y-12">
+                    {% for q in questions.coding %}
+                    <div class="bg-[#0f172a] rounded-3xl border border-white/10 overflow-hidden">
+                        <!-- Challenge Info -->
+                        <div class="p-8 border-b border-white/5">
+                            <h3 class="text-xl font-bold text-white mb-4">{{ q.question }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-slate-900/80 p-4 rounded-xl border border-white/5">
+                                    <p class="text-xs uppercase font-bold text-slate-500 tracking-wider mb-2">Example Input</p>
+                                    <code class="text-amber-200 text-sm">{{ q.example_input|safe }}</code>
+                                </div>
+                                <div class="bg-slate-900/80 p-4 rounded-xl border border-white/5">
+                                    <p class="text-xs uppercase font-bold text-slate-500 tracking-wider mb-2">Example Output</p>
+                                    <code class="text-emerald-400 text-sm">{{ q.example_output|safe }}</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Editor Controls -->
+                        <div class="bg-slate-900/50 px-8 py-4 flex items-center justify-between border-b border-white/5">
+                            <div class="flex items-center gap-4">
+                                <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">Environment</span>
+                                <select id="language{{ forloop.counter }}" onchange="setTemplate({{ forloop.counter }})"
+                                    class="rounded-lg px-4 py-2 text-sm font-semibold border-white/10">
+                                    <option value="71">Python 3</option>
+                                    <option value="54">C++ 17</option>
+                                    <option value="62">Java 11</option>
+                                    <option value="63">JavaScript</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="runCode({{ forloop.counter }}, '{{ q.function_name }}')"
+                                class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center gap-2">
+                                <i class="fas fa-play text-[10px]"></i> Run Code
+                            </button>
+                        </div>
+
+                        <!-- Editor Area -->
+                        <div class="relative">
+                            <textarea id="code{{ forloop.counter }}" rows="12" 
+                                class="w-full code-editor p-8 resize-none text-[15px] leading-relaxed focus:ring-0 border-none"
+                                spellcheck="false"></textarea>
+                        </div>
+
+                        <!-- Output Console -->
+                        <div class="bg-black/40 p-6 border-t border-white/5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-2 h-2 rounded-full bg-slate-600"></div>
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Console Output</span>
+                            </div>
+                            <pre id="output{{ forloop.counter }}" class="text-sm font-mono text-slate-400 min-h-[40px] whitespace-pre-wrap">Ready to execute...</pre>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Submit Action -->
+            <div class="flex flex-col items-center pt-10 pb-20">
+                <button type="submit" 
+                    class="group relative inline-flex items-center justify-center px-10 py-5 font-bold text-white transition-all duration-200 bg-blue-600 font-pj rounded-2xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-500/20 active:scale-95">
+                    Submit Assessment
+                    <i class="fas fa-arrow-right ml-3 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+                <p class="text-slate-500 text-sm mt-6 flex items-center gap-2">
+                    <i class="fas fa-lock text-[10px]"></i>
+                    Responses are automatically saved.
+                </p>
+            </div>
+        </form>
+
+        <p class="text-center text-slate-600 text-xs font-medium uppercase tracking-widest mb-12">
+            &copy; 2026 Placement Portal • Secure Evaluation Environment
+        </p>
+    </div>
+
+    <!-- JSON DATA -->
+    <script>
+        const codingQuestions = {{ questions.coding|safe }};
+    </script>
+
+    <!-- CORE LOGIC -->
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function getTemplate(language, functionName) {
+            if (language == 71) {
+                return `def ${functionName}(data):\n    # Write your code here\n    \n    pass\n`;
+            }
+            if (language == 54) {
+                return `#include <vector>\n#include <string>\nusing namespace std;\n\nauto ${functionName}(auto data) {\n    // Write your code here\n\n}\n`;
+            }
+            if (language == 62) {
+                return `public static int ${functionName}(String data) {\n    // Write your code here\n\n    return 0;\n}\n`;
+            }
+            if (language == 63) {
+                return `function ${functionName}(data) {\n    // Write your code here\n\n}\n`;
+            }
+            return "";
+        }
+
+        window.onload = function() {
+            const editors = document.querySelectorAll("textarea[id^='code']");
+            editors.forEach((editor, index) => {
+                const functionName = codingQuestions[index].function_name;
+                editor.value = getTemplate(71, functionName);
+            });
+        }
+
+        function setTemplate(i) {
+            const language = document.getElementById("language" + i).value;
+            const editor = document.getElementById("code" + i);
+            const functionName = codingQuestions[i - 1].function_name;
+            editor.value = getTemplate(language, functionName);
+        }
+
+        function runCode(i, functionName) {
+            const code = document.getElementById("code" + i).value;
+            const language = document.getElementById("language" + i).value;
+            const testCases = codingQuestions[i - 1].test_cases;
+            const outputEl = document.getElementById("output" + i);
+
+            outputEl.innerText = "Executing...";
+            outputEl.classList.remove("text-red-400", "text-emerald-400");
+            outputEl.classList.add("text-blue-400");
+
+            fetch("/assessments/run-code/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({
+                    code: code,
+                    language: language,
+                    test_cases: testCases,
+                    function_name: functionName
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                outputEl.classList.remove("text-blue-400");
+                if (data.error) {
+                    outputEl.innerText = data.error;
+                    outputEl.classList.add("text-red-400");
+                    return;
+                }
+
+                let text = "";
+                if (data.results) {
+                    data.results.forEach(r => {
+                        text += r + "\n";
+                    });
+                    text += `\nFinal Result: ${data.passed}/${data.total} Test Cases Passed`;
+                    
+                    if (data.passed === data.total) {
+                        outputEl.classList.add("text-emerald-400");
+                    } else {
+                        outputEl.classList.add("text-amber-400");
+                    }
+                }
+                outputEl.innerText = text;
+            })
+            .catch(err => {
+                outputEl.innerText = "Error connecting to execution server.";
+                outputEl.classList.add("text-red-400");
+            });
+        }
+    </script>
 </body>
 </html>

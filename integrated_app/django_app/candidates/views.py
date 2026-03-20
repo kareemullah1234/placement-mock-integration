@@ -25,7 +25,7 @@ def upload_resume(request, job_id):
     if request.method == "POST":
         resume_file = request.FILES.get('resume')
         if not resume_file:
-             return render(request, "candidates/upload_resume.html", {"error": "Please upload a resume"})
+             return render(request, "candidates/upload_resume.html", {"error": "Please upload a resume", "job": job})
 
         candidate.resume = resume_file
         resume_text = extract_text_from_resume(resume_file).lower()
@@ -41,7 +41,7 @@ def upload_resume(request, job_id):
         
         total_skills = len(job_skills)
         matched_count = len(matched_skills)
-        match_score = (matched_count / total_skills) * 100 if total_skills > 0 else 100
+        match_score = (matched_count / total_skills) * 100.0 if total_skills > 0 else 100.0
 
         if match_score >= 50:
             application, created = Application.objects.get_or_create(candidate=candidate, job=job)
@@ -64,7 +64,7 @@ def upload_resume(request, job_id):
             "status": status
         })
 
-    return render(request, "candidates/upload_resume.html")
+    return render(request, "candidates/upload_resume.html", {"job": job})
 
 @login_required
 def candidate_profile(request):
@@ -149,10 +149,11 @@ def update_profile(request):
         user_id = request.POST.get("user_id")
         if not user_id or user_id == "null":
             return JsonResponse({"error":"Invalid user_id"}, status=400)
-        
+            
         try:
-            profile = CandidateProfile.objects.get(user_id=user_id)
-        except CandidateProfile.DoesNotExist:
+            user_id_int = int(user_id)
+            profile = CandidateProfile.objects.get(user_id=user_id_int)
+        except (ValueError, CandidateProfile.DoesNotExist):
             return JsonResponse({"error":"Profile not found"}, status=404)
 
         profile.phone = request.POST.get("phone", "")
@@ -161,15 +162,20 @@ def update_profile(request):
         profile.save()
         return JsonResponse({"message": "Profile updated"})
     return JsonResponse({"error": "Method not allowed"}, status=405)
-
+    
+@csrf_exempt
 def get_profile(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+        
     user_id = request.GET.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Missing user_id"}, status=400)
     try:
-        user = User.objects.get(id=user_id)
+        user_id_int = int(user_id)
+        user = User.objects.get(id=user_id_int)
         profile = CandidateProfile.objects.get(user=user)
-    except (User.DoesNotExist, CandidateProfile.DoesNotExist):
+    except (ValueError, User.DoesNotExist, CandidateProfile.DoesNotExist):
         return JsonResponse({"error": "User or Profile not found"}, status=404)
 
     data = {

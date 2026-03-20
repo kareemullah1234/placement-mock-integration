@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Placement Portal{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #131314; /* Default Gemini Dark */
+            color: #e3e3e3;
+            min-height: 100vh;
+        }
+        .glass-card {
+            background-color: #1e1f20;
+            border: 1px solid #444746;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: border-color 0.2s;
+        }
+        .glass-card:hover {
+            border-color: #747775;
+        }
+        .glass-nav {
+            background-color: rgba(19, 19, 20, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #444746;
+        }
+        .gemini-gradient-text {
+            background: linear-gradient(74deg, #4285f4 0%, #9b72cb 9%, #d96570 20%, #d96570 24%, #9b72cb 35%, #4285f4 44%, #9b72cb 50%, #d96570 56%, #131314 75%, #131314 100%);
+            background-size: 400% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gemini-text-pan 8s linear infinite;
+        }
+        @keyframes gemini-text-pan {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gemini-gradient-bg {
+            background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570, #fbbc04);
+            background-size: 300% 100%;
+            animation: gemini-bg-pan 6s ease-in-out infinite;
+            color: white !important;
+            border: none !important;
+        }
+        .gemini-gradient-bg:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        @keyframes gemini-bg-pan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background-color: #282a2c;
+            border: 1px solid #444746;
+            border-radius: 1rem;
+            color: #e3e3e3;
+            transition: all 0.2s;
+            outline: none;
+            font-family: 'Outfit', sans-serif;
+        }
+        .form-input:focus {
+            box-shadow: 0 0 0 2px rgba(168, 199, 250, 0.5);
+            border-color: #a8c7fa;
+            background-color: #1e1f20;
+        }
+        /* Custom scrollbar for Gemini aesthetic */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #131314; }
+        ::-webkit-scrollbar-thumb { background: #444746; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #747775; }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body class="relative overflow-y-auto flex flex-col min-h-screen">
+    <!-- Navbar -->
+    <nav class="glass-nav sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <a href="/" class="flex items-center space-x-3 group">
+            <div class="text-2xl">
+                <i class="fas fa-sparkles gemini-gradient-text"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#e3e3e3]">Placement<span class="gemini-gradient-text ml-1">AI</span></span>
+        </a>
+
+        <div class="flex items-center space-x-6">
+            {% if request.user.is_authenticated %}
+                <span class="text-sm text-[#c4c7c5] font-medium tracking-wide border-r border-[#444746] pr-5">
+                    <i class="fas fa-user-circle mr-1"></i> {{ request.user.username }}
+                </span>
+                
+                {% if request.user.role == 'candidate' %}
+                    <a href="{% url 'candidate_dashboard' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-chart-line mr-1"></i> Dashboard</a>
+                    <a href="{% url 'companies:job_list' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-briefcase mr-1"></i> Jobs</a>
+                    <a href="{% url 'candidate_profile' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-id-card mr-1"></i> Profile</a>
+                {% elif request.user.role == 'company' %}
+                    <a href="{% url 'companies:company_dashboard' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-chart-line mr-1"></i> Dashboard</a>
+                    <a href="{% url 'companies:company_jobs' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-building mr-1"></i> My Jobs</a>
+                    <a href="{% url 'companies:create_job' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-plus-circle mr-1"></i> Post Job</a>
+                    <a href="{% url 'companies:job_list' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-list mr-1"></i> All Jobs</a>
+                    <a href="{% url 'companies:company_profile' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-id-badge mr-1"></i> Profile</a>
+                {% endif %}
+                
+                <form method="post" action="{% url 'logout' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-sm font-medium px-4 py-2 border border-[#444746] rounded-full text-[#c4c7c5] hover:text-[#e3e3e3] hover:bg-[#282a2c] transition-colors">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'companies:job_list' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-briefcase mr-1"></i> View Jobs</a>
+                <a href="{% url 'login' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm">Login</a>
+                <a href="{% url 'register' %}" class="px-5 py-2 gemini-gradient-bg text-sm font-semibold rounded-full shadow-lg transition-all">Get Started</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="max-w-7xl mx-auto w-full px-6 mt-6 z-40">
+        {% for message in messages %}
+            <div class="px-4 py-3 rounded-2xl text-sm flex items-center border {% if message.tags == 'success' %}bg-[#1e1f20] border-[#34a853] text-[#34a853]{% elif message.tags == 'error' %}bg-[#1e1f20] border-[#ea4335] text-[#ea4335]{% else %}bg-[#1e1f20] border-[#a8c7fa] text-[#a8c7fa]{% endif %} mb-3 relative animate__animated animate__fadeInDown shadow-md">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-3 text-lg"></i>
+                <span class="font-medium">{{ message }}</span>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-8 relative z-10 flex flex-col pt-10">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="mt-auto py-8 text-center text-[#8e918f] text-sm bg-[#131314]">
+        <div class="flex items-center justify-center mb-2">
+            <i class="fas fa-sparkles text-[#a8c7fa] mr-2"></i>
+            <span class="font-medium tracking-wide">Powered by Google Gemini Design</span>
+        </div>
+        &copy; 2026 PlacementAI. Built for next-generation intelligence.
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

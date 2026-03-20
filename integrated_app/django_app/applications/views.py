@@ -39,6 +39,10 @@ def choose_test_slot(request, application_id):
 
         application.status = "test_scheduled"
         application.save()
+        
+        if slot == "now":
+            return redirect("assessments:test_instruction", application_id=application.id)
+        
         return redirect("candidate_dashboard")
 
     return render(request, "applications/choose_slot.html")
