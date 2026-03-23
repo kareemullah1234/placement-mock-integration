@@ -1,91 +1,73 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Edit Job</title>
+{% extends 'companies/base.html' %}
+{% load static %}
 
-<style>
+{% block title %}Edit Job - Company Portal{% endblock %}
+{% block header_title %}Edit Job: {{ job.title }}{% endblock %}
 
-body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f9;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="glass-panel p-8 rounded-2xl border border-slate-700/50 relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -mt-24 -mr-24"></div>
+        
+        <div class="mb-8 border-b border-slate-700/50 pb-6 flex items-center justify-between">
+            <div>
+                <h2 class="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                    <i class="fas fa-pen text-amber-500"></i> Edit Job Post
+                </h2>
+                <p class="text-slate-400 mt-2 font-medium">Updating details for <span class="font-bold text-white">{{ job.title }}</span></p>
+            </div>
+            <a href="{% url 'companies:company_dashboard' %}" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
 
-.container{
-    background:white;
-    padding:30px;
-    width:450px;
-    border-radius:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-300">Job Title <span class="text-amber-500">*</span></label>
+                <input type="text" name="title" value="{{ job.title }}" required
+                    class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all">
+            </div>
 
-h2{
-    text-align:center;
-    margin-bottom:25px;
-}
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-300">Job Description <span class="text-amber-500">*</span></label>
+                <textarea name="description" rows="5" required
+                    class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all resize-y">{{ job.description }}</textarea>
+            </div>
 
-label{
-    font-weight:bold;
-}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- If the original context passed Skills differently from create_job, 
+                     we need to make sure we parse it. The original code used job.required_skills, 
+                     but earlier in create_job it added to job.skills. We'll use the original required_skills mapping. -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-300">Required Skills</label>
+                    <input type="text" name="skills" value="{{ job.required_skills|default:'' }}"
+                        class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all">
+                </div>
 
-input, textarea{
-    width:100%;
-    padding:10px;
-    margin-top:5px;
-    margin-bottom:15px;
-    border:1px solid #ccc;
-    border-radius:5px;
-    font-size:14px;
-}
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-300">Location</label>
+                    <input type="text" name="location" value="{{ job.location }}"
+                        class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all">
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-300">Annual Salary (₹)</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                    <input type="number" name="salary" value="{{ job.salary }}"
+                        class="w-full bg-slate-900/50 text-white rounded-xl pl-8 pr-4 py-3 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all">
+                </div>
+            </div>
 
-textarea{
-    resize:none;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    background:#4CAF50;
-    color:white;
-    border:none;
-    border-radius:5px;
-    font-size:16px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#45a049;
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<h2>Edit Job Post</h2>
-
-<form method="POST">
-{% csrf_token %}
-
-<label>Job Title</label>
-<input type="text" name="title" value="{{ job.title }}" required>
-
-<label>Description</label>
-<textarea name="description" rows="5">{{ job.description }}</textarea>
-
-<label>Required Skills</label>
-<input type="text" name="skills" value="{{ job.required_skills }}">
-
-<button type="submit">Update Job</button>
-
-</form>
-
+            <div class="pt-6">
+                <button type="submit" class="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 flex flex-center items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-95 transition-all">
+                    <i class="fas fa-save"></i> Update Job
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-
-</body>
-</html>
+{% endblock %}

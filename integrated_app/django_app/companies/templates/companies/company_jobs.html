@@ -1,38 +1,64 @@
+{% extends 'companies/base.html' %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block title %}My Posted Jobs - Company Portal{% endblock %}
+{% block header_title %}My Posted Jobs{% endblock %}
 
-<div class="container"></div>
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+    <div class="mb-6">
+        <h2 class="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+            <i class="fas fa-list text-blue-500"></i> My Posted Jobs
+        </h2>
+        <p class="text-slate-400 mt-2 font-medium">A list of all your live and pending jobs.</p>
+    </div>
 
-<h2>My Posted Jobs</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for job in jobs %}
+        <div class="glass-panel rounded-2xl p-6 flex flex-col group relative overflow-hidden transition-all hover:border-blue-500/30">
+            <!-- decorative accent -->
+            <div class="absolute top-0 left-0 w-1 h-full {% if job.is_active %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></div>
+            
+            <div class="flex justify-between items-start mb-4 pl-3">
+                <div class="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                    <i class="fas fa-briefcase text-indigo-400 text-xl"></i>
+                </div>
+                {% if job.is_active %}
+                <span class="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5"><i class="fas fa-check-circle"></i> Approved</span>
+                {% else %}
+                <span class="bg-amber-500/10 text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1.5"><i class="fas fa-clock"></i> Pending</span>
+                {% endif %}
+            </div>
 
-{% for job in jobs %}
+            <h3 class="text-xl font-bold text-white mb-2 line-clamp-1 min-h-[1.75rem] pl-3">{{ job.title }}</h3>
+            <p class="text-slate-400 text-sm line-clamp-3 mb-6 min-h-[3.75rem] pl-3">{{ job.description }}</p>
 
-<div style="border:1px solid #ccc; padding:15px; margin:10px">
-
-    <h3>{{ job.title }}</h3>
-
-    <p>{{ job.description }}</p>
-
-    <p><b>Skills:</b> {{ job.skills }}</p>
-
-    <p><b>Salary:</b> {{ job.salary }}</p>
-
-    <p>
-        Status:
-        {% if job.is_active %}
-            Approved
-        {% else %}
-            Waiting for Admin Approval
-        {% endif %}
-    </p>
-
+            <div class="mt-auto space-y-3 pl-3">
+                <div class="flex items-center gap-3 text-sm text-slate-300 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+                    <i class="fas fa-cog text-slate-500 w-5 text-center"></i>
+                    <span class="font-medium truncate flex-1">{{ job.skills }}</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-slate-300 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+                    <i class="fas fa-money-bill text-emerald-500 w-5 text-center"></i>
+                    <span class="font-medium flex-1">₹{{ job.salary|default:"0" }}</span>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-slate-700/50 pl-3 flex gap-3">
+                <a href="{% url 'companies:edit_job' job.id %}" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 rounded-lg text-sm text-center transition-colors">
+                    Edit
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-slate-700 rounded-3xl bg-slate-800/20">
+            <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-box-open text-2xl text-slate-500"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">No jobs posted yet.</h3>
+            <p class="text-slate-400 mb-6 font-medium">Head over to the Create Job section to get started.</p>
+        </div>
+        {% endfor %}
+    </div>
 </div>
-
-{% empty %}
-
-<p>No jobs posted yet.</p>
-
-{% endfor %}
-
-</div>
+{% endblock %}

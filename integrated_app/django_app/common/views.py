@@ -22,6 +22,9 @@ def admin_stats(request):
 from django.http import JsonResponse
 from candidates.models import CandidateProfile
 
+def admin_dashboard(request):
+    return render(request, 'common/admin_dashboard.html')
+
 def admin_users(request):
 
     profiles = CandidateProfile.objects.select_related("user")

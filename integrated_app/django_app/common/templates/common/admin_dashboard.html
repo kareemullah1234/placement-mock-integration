@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard | PlacementAI{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-[#e3e3e3] mb-2">Platform <span class="gemini-gradient-text">Overview</span></h1>
+    <p class="text-[#c4c7c5]">Monitor real-time statistics and user activity across the system.</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10" id="stats-container">
+    <!-- JS will populate these -->
+    <div class="glass-card p-6 flex flex-col items-center justify-center animate-pulse">
+        <div class="h-8 bg-[#444746] rounded w-16 mb-4"></div>
+        <div class="h-4 bg-[#444746] rounded w-24"></div>
+    </div>
+    <div class="glass-card p-6 flex flex-col items-center justify-center animate-pulse">
+        <div class="h-8 bg-[#444746] rounded w-16 mb-4"></div>
+        <div class="h-4 bg-[#444746] rounded w-24"></div>
+    </div>
+    <div class="glass-card p-6 flex flex-col items-center justify-center animate-pulse">
+        <div class="h-8 bg-[#444746] rounded w-16 mb-4"></div>
+        <div class="h-4 bg-[#444746] rounded w-24"></div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="glass-card overflow-hidden">
+    <div class="px-6 py-5 border-b border-[#444746] flex justify-between items-center bg-[#1e1f20]">
+        <h2 class="text-xl font-semibold text-[#e3e3e3]"><i class="fas fa-users mr-2 text-[#a8c7fa]"></i>Registered Candidates</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#282a2c] text-[#c4c7c5] text-xs uppercase tracking-wider">
+                    <th class="px-6 py-4 font-medium">Name</th>
+                    <th class="px-6 py-4 font-medium">Email</th>
+                    <th class="px-6 py-4 font-medium">Phone</th>
+                    <th class="px-6 py-4 font-medium text-center">Resume</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-[#444746]">
+                <!-- JS will populate this -->
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-[#8e918f]">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-3 text-[#a8c7fa]"></i>
+                        <p>Loading candidate data...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch stats
+    fetch('/common/admin/stats/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('stats-container');
+            container.innerHTML = `
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 text-[#282a2c] opacity-50 group-hover:scale-110 transition-transform duration-500">
+                        <i class="fas fa-user-graduate text-8xl"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-[#c4c7c5] font-medium mb-1">Total Candidates</h3>
+                        <p class="text-4xl font-bold text-[#a8c7fa] mb-2">${data.candidates}</p>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 text-[#282a2c] opacity-50 group-hover:scale-110 transition-transform duration-500">
+                        <i class="fas fa-building text-8xl"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-[#c4c7c5] font-medium mb-1">Partner Companies</h3>
+                        <p class="text-4xl font-bold text-[#c387f5] mb-2">${data.companies}</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 text-[#282a2c] opacity-50 group-hover:scale-110 transition-transform duration-500">
+                        <i class="fas fa-briefcase text-8xl"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-[#c4c7c5] font-medium mb-1">Active Jobs</h3>
+                        <p class="text-4xl font-bold text-[#fbbc04] mb-2">${data.jobs}</p>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(err => console.error('Error fetching stats:', err));
+
+    // Fetch users
+    fetch('/common/admin/users/')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('users-table-body');
+            
+            if (data.users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-[#8e918f]">
+                            <i class="fas fa-user-slash text-2xl mb-3"></i>
+                            <p>No candidates registered yet.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            data.users.forEach(user => {
+                const resumeLink = user.resume 
+                    ? `<a href="${user.resume}" target="_blank" class="px-3 py-1 bg-[#282a2c] hover:bg-[#333537] text-[#a8c7fa] rounded-full text-xs font-medium transition-colors border border-[#444746]"><i class="fas fa-file-pdf mr-1"></i> View</a>` 
+                    : `<span class="text-xs text-[#8e918f] italic">Not uploaded</span>`;
+                
+                html += `
+                    <tr class="hover:bg-[#1a1b1d] transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="bg-[#282a2c] text-[#e3e3e3] rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 border border-[#444746]">
+                                    ${user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span class="font-medium text-[#e3e3e3]">${user.name}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-[#c4c7c5] text-sm">${user.email}</td>
+                        <td class="px-6 py-4 text-[#c4c7c5] text-sm">${user.phone || '<span class="text-[#8e918f] italic">Not provided</span>'}</td>
+                        <td class="px-6 py-4 text-center">${resumeLink}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => {
+            console.error('Error fetching users:', err);
+            document.getElementById('users-table-body').innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-[#ea4335]">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Failed to load user data.
+                    </td>
+                </tr>
+            `;
+        });
+});
+</script>
+{% endblock %}

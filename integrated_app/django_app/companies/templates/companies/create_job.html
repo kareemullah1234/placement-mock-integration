@@ -1,42 +1,76 @@
+{% extends 'companies/base.html' %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block title %}Post Job - Company Portal{% endblock %}
+{% block header_title %}Create New Job Post{% endblock %}
 
-<div class="container">
-<h2>Create Job Post</h2>
-<form method="POST">
-    {% csrf_token %}<div>
-    <label>Job Title</label><br>
-    <input type="text" name="title" required>
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="glass-panel p-8 rounded-2xl border border-slate-700/50 relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mt-24 -mr-24"></div>
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                <i class="fas fa-edit text-blue-500"></i> New Job Opening
+            </h2>
+            <p class="text-slate-400 mt-2 font-medium">Fill in the details below to attract top candidates.</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl flex items-center gap-3">
+            <i class="fas fa-exclamation-circle text-lg"></i>
+            <span class="font-medium">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-300">Job Title <span class="text-rose-500">*</span></label>
+                <input type="text" name="title" required placeholder="e.g. Senior Software Engineer"
+                    class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all">
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-300">Job Description <span class="text-rose-500">*</span></label>
+                <textarea name="description" rows="5" required placeholder="Describe the responsibilities and requirements..."
+                    class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all resize-y"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-300">Required Skills <span class="text-rose-500">*</span></label>
+                    <input type="text" name="skills" required placeholder="Python, Django, React"
+                        class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all">
+                    <p class="text-xs text-slate-500">Comma separated skills</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-300">Location</label>
+                    <input type="text" name="location" placeholder="e.g. New York, NY or Remote"
+                        class="w-full bg-slate-900/50 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-300">Annual Salary (₹) <span class="text-rose-500">*</span></label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                    <input type="number" name="salary" required placeholder="1500000"
+                        class="w-full bg-slate-900/50 text-white rounded-xl pl-8 pr-4 py-3 border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 flex justify-end gap-4">
+                <a href="{% url 'companies:company_dashboard' %}" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 flex flex-center gap-2 transform hover:scale-[1.02] active:scale-95 transition-all">
+                    <i class="fas fa-paper-plane mt-1"></i> Post Job
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-
-<br>
-
-<div>
-    <label>Job Description</label><br>
-    <textarea name="description" rows="5" required></textarea>
-</div>
-
-<br>
-
-<div>
-    <label>Required Skills (comma separated)</label><br>
-    <input type="text" name="skills" placeholder="python, sql, machine learning" required>
-</div>
-
-<br>
-
-<label>Location</label>
-<input type="text" name="location">
-
-
-<label> salary</label><br>
-<input type="number" name="salary" required>
-
-<br>
-
-<button type="submit">Post Job</button>
-
-</form>
-
-</div>
+{% endblock %}

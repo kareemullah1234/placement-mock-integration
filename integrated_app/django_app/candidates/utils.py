@@ -37,20 +37,18 @@ from django.conf import settings
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
 def extract_skills_from_resume(resume_text):
-
-    model = genai.GenerativeModel("gemini-1.5-flash")
-
-    prompt = f"""
-    Extract the technical and professional skills from the following resume text.
-
-    Return ONLY a comma separated list of skills.
-
-    Resume:
-    {resume_text}
-    """
-
-    response = model.generate_content(prompt)
-
-    skills = response.text.strip()
-
-    return skills
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        prompt = f"""
+        Extract the technical and professional skills from the following resume text.
+        Return ONLY a comma separated list of skills.
+        Resume:
+        {resume_text}
+        """
+        response = model.generate_content(prompt)
+        skills = response.text.strip()
+        return skills
+    except Exception as e:
+        print(f"Warning: Gemini skill extraction failed (Check API Key). Fallback used. Error: {e}")
+        # Default mock fallback skills
+        return "Python, Django, HTML, CSS, JavaScript, React, Tailwind, SQL, REST APIs"

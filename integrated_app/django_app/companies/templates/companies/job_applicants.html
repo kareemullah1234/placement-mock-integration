@@ -1,148 +1,137 @@
-<!DOCTYPE html>
-<html>
+{% extends 'companies/base.html' %}
+{% load static %}
 
-<head>
-<title>Applicants</title>
+{% block title %}Job Applicants - Company Portal{% endblock %}
+{% block header_title %}Applicants for {{ job.title }}{% endblock %}
 
-<style>
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                <i class="fas fa-users text-blue-500"></i> Applicants
+            </h2>
+            <p class="text-slate-400 mt-2 font-medium">Review and manage candidates for <span class="text-white font-semibold">{{ job.title }}</span></p>
+        </div>
+        <div>
+            <a href="{% url 'companies:company_dashboard' %}" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition-colors flex items-center gap-2 border border-slate-700">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
 
-body{
-font-family:Arial;
-background:#f4f6f9;
-padding:20px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th,td{
-padding:10px;
-border:1px solid #ddd;
-text-align:left;
-}
-
-th{
-background:#3498db;
-color:white;
-}
-
-.btn{
-padding:6px 10px;
-background:#2ecc71;
-color:white;
-text-decoration:none;
-border-radius:4px;
-}
-
-.dashboard-btn{
-display:inline-block;
-margin-bottom:20px;
-background:#3498db;
-color:white;
-padding:8px 12px;
-border-radius:5px;
-text-decoration:none;
-}
-
-</style>
-</head>
-
-<body>
-
-<a href="/companies/dashboard/" class="dashboard-btn">
-← Back to Dashboard
-</a>
-
-<h2>Applicants for {{ job.title }}</h2>
-
-<table>
-
-<tr>
-<th>Candidate</th>
-<th>Status</th>
-<th>Resume</th>
-<th>Action</th>
-<th>Aptitude</th>
-<th>Skills</th>
-<th>Coding</th>
-<th>Total</th>
-</tr>
-
-{% for application in applications %}
-
-<tr>
-
-<td>{{ application.candidate.user.username }}</td>
-
-<td>{{ application.status }}</td>
-
-<td>
-{% if application.candidate.resume %}
-<a href="{{ application.candidate.resume.url }}">View Resume</a>
-{% endif %}
-</td>
-
-<!-- ACTION COLUMN -->
-<td>
-{% if application.status == "applied" %}
-<a href="{% url 'companies:allow_test' application.id %}" class="btn">
-Allow Test
-</a>
-
-{% elif application.status == "test_scheduled" %}
-Test Already Scheduled
-
-{% elif application.status == "aptitude_passed" %}
-Aptitude Passed
-
-{% elif application.status == "aptitude_failed" %}
-Aptitude Failed
-{% endif %}
-</td>
-
-<!-- APTITUDE SCORE -->
-<td>
-{% for attempt in attempts %}
-    {% if attempt.application.id == application.id %}
-        {{ attempt.aptitude_score }}
-    {% endif %}
-{% endfor %}
-</td>
-
-<!-- SKILL SCORE -->
-<td>
-{% for attempt in attempts %}
-    {% if attempt.application.id == application.id %}
-        {{ attempt.skill_score }}
-    {% endif %}
-{% endfor %}
-</td>
-
-<!-- CODING SCORE -->
-<td>
-{% for attempt in attempts %}
-    {% if attempt.application.id == application.id %}
-        {{ attempt.coding_score }}
-    {% endif %}
-{% endfor %}
-</td>
-
-<!-- TOTAL SCORE -->
-<td>
-{% for attempt in attempts %}
-    {% if attempt.application.id == application.id %}
-        {{ attempt.score }}
-    {% endif %}
-{% endfor %}
-</td>
-
-</tr>
-
-{% endfor %}
-</table>
-
-</body>
-</html>
+    <!-- Applicants Table -->
+    <div class="glass-panel border border-slate-700/50 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-900/50 border-b border-slate-700/50">
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-400">Candidate</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-400">Resume</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-400">Action</th>
+                        <th class="py-4 px-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">Aptitude</th>
+                        <th class="py-4 px-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">Skills</th>
+                        <th class="py-4 px-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">Coding</th>
+                        <th class="py-4 px-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/50">
+                    {% for application in applications %}
+                    <tr class="hover:bg-slate-800/30 transition-colors">
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex flex-shrink-0 items-center justify-center font-bold text-white text-xs">
+                                    {{ application.candidate.user.username|make_list|first|upper }}
+                                </div>
+                                <span class="font-medium text-white">{{ application.candidate.user.username }}</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                {% if application.status == 'applied' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
+                                {% elif application.status == 'test_allowed' %}bg-yellow-500/10 text-yellow-400 border border-yellow-500/20
+                                {% elif application.status == 'test_scheduled' %}bg-purple-500/10 text-purple-400 border border-purple-500/20
+                                {% elif 'passed' in application.status %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                {% elif 'failed' in application.status %}bg-rose-500/10 text-rose-400 border border-rose-500/20
+                                {% else %}bg-slate-500/10 text-slate-400 border border-slate-500/20{% endif %}">
+                                {{ application.status|title|replace:"_":" " }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            {% if application.candidate.resume %}
+                            <a href="{{ application.candidate.resume.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 font-medium text-sm flex items-center gap-2 transition-colors">
+                                <i class="fas fa-file-pdf"></i> View
+                            </a>
+                            {% else %}
+                            <span class="text-slate-500 text-sm italic">Not provided</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6">
+                            {% if application.status == "applied" %}
+                            <a href="{% url 'companies:allow_test' application.id %}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold text-xs rounded-lg border border-emerald-500/20 transition-colors whitespace-nowrap">
+                                <i class="fas fa-check-circle"></i> Allow Test
+                            </a>
+                            {% elif application.status == "test_scheduled" %}
+                            <span class="text-slate-400 text-xs font-medium"><i class="fas fa-clock text-yellow-500 mr-1"></i> test scheduled</span>
+                            {% elif application.status == "aptitude_passed" %}
+                            <span class="text-emerald-400 text-xs font-medium"><i class="fas fa-check text-emerald-500 mr-1"></i> Aptitude Passed</span>
+                            {% elif application.status == "aptitude_failed" %}
+                            <span class="text-rose-400 text-xs font-medium"><i class="fas fa-times text-rose-500 mr-1"></i> Aptitude Failed</span>
+                            {% else %}
+                            <span class="text-slate-500 text-xs font-medium">-</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Scores -->
+                        <td class="py-4 px-4 text-center font-mono text-sm text-slate-300">
+                            {% for attempt in attempts %}
+                                {% if attempt.application.id == application.id %}
+                                    {{ attempt.aptitude_score|default:"-" }}
+                                {% endif %}
+                            {% empty %} -
+                            {% endfor %}
+                        </td>
+                        <td class="py-4 px-4 text-center font-mono text-sm text-slate-300">
+                            {% for attempt in attempts %}
+                                {% if attempt.application.id == application.id %}
+                                    {{ attempt.skill_score|default:"-" }}
+                                {% endif %}
+                            {% empty %} -
+                            {% endfor %}
+                        </td>
+                        <td class="py-4 px-4 text-center font-mono text-sm text-slate-300">
+                            {% for attempt in attempts %}
+                                {% if attempt.application.id == application.id %}
+                                    {{ attempt.coding_score|default:"-" }}
+                                {% endif %}
+                            {% empty %} -
+                            {% endfor %}
+                        </td>
+                        <td class="py-4 px-4 text-center font-mono font-bold text-sm text-indigo-400">
+                            {% for attempt in attempts %}
+                                {% if attempt.application.id == application.id %}
+                                    {{ attempt.score|default:"-" }}
+                                {% endif %}
+                            {% empty %} -
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="py-12 text-center text-slate-400">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-inbox text-4xl mb-3 text-slate-600"></i>
+                                <p class="text-lg font-medium">No applicants yet</p>
+                                <p class="text-sm">Candidates will appear here once they apply.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
