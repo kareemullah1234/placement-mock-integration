@@ -28,48 +28,61 @@ def extract_json(text):
 def generate_test_questions(skills):
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
-
+        
+        skills_str = ", ".join(skills) if skills else "General Software Development"
+        
         prompt = f"""
-Generate an aptitude test in JSON format.
-... [keep existing prompt logic] ...
-"""
+        Generate a comprehensive recruitment assessment for a candidate with skills: {skills_str}.
+        The response MUST be a single JSON object with EXACTLY these keys:
+        - "aptitude": 15 multiple-choice questions on math, logic, and patterns. Each with 'question', 'options' (list of 4), and 'answer' (the correct option string).
+        - "skills": 15 multiple-choice questions specifically based on {skills_str}. Each with 'question', 'options' (list of 4), and 'answer' (the correct option string).
+        - "communication": 5 descriptive/subjective questions on workplace scenarios and project communication. Each with 'question'.
+        - "coding": 2 algorithmic coding problems. Each with:
+            'question' (problem statement), 
+            'function_name' (e.g. solve), 
+            'input_description', 
+            'example_input', 
+            'example_output', 
+            'test_cases' (list of 3 objects with 'input' and 'output').
+        
+        Ensure questions are professional and of varying difficulty. Give valid JSON only.
+        """
         response = model.generate_content(prompt)
         questions = extract_json(response.text)
         return questions
     except Exception as e:
         print(f"GEMINI API ERROR: {e}. Falling back to mock data.")
-        # Return high-quality mock data for the demo
+        # Expanded mock data for the demo
         return {
             "aptitude": [
                 {"question": "If 5 workers can build a wall in 12 days, how many days will 10 workers take?", "options": ["6 days", "5 days", "24 days", "10 days"], "answer": "6 days"},
                 {"question": "A train 150m long is running at 54 km/hr. How long will it take to cross a platform 250m long?", "options": ["20 sec", "26.67 sec", "30 sec", "15 sec"], "answer": "26.67 sec"},
-                {"question": "Find the odd one out: 64, 125, 216, 343, 512, 729, 1000", "options": ["All are perfect cubes", "64", "512", "None"], "answer": "All are perfect cubes"},
                 {"question": "What comes next in the sequence: 2, 6, 12, 20, 30, ...?", "options": ["40", "42", "44", "46"], "answer": "42"},
                 {"question": "If RED is coded as 27, then BLUE is coded as?", "options": ["40", "50", "44", "36"], "answer": "40"}
-            ],
+            ] * 4, # Multiply to get ~16 questions for demo
             "skills": [
-                {"question": f"Which of the following is a primary characteristic of {skills[0] if skills else 'System Design'}?", "options": ["Scalability", "Encapsulation", "Polymorphism", "Inheritance"], "answer": "Scalability"},
+                {"question": f"Which of the following is a primary characteristic of {skills_str}?", "options": ["Scalability", "Encapsulation", "Polymorphism", "Inheritance"], "answer": "Scalability"},
                 {"question": "What is the time complexity of searching in a Balanced Binary Search Tree?", "options": ["O(1)", "O(n)", "O(log n)", "O(n log n)"], "answer": "O(log n)"},
-                {"question": "Which protocol is used for secure data transmission over the web?", "options": ["HTTP", "FTP", "HTTPS", "SMTP"], "answer": "HTTPS"},
                 {"question": "In a relational database, what does ACID stand for?", "options": ["Atomicity, Consistency, Isolation, Durability", "Accuracy, Complexity, Integrity, Design", "All Clear In Data", "Average Cost In Dollars"], "answer": "Atomicity, Consistency, Isolation, Durability"},
                 {"question": "What is the purpose of a Load Balancer?", "options": ["To increase storage", "To distribute incoming traffic", "To compile code", "To encrypt files"], "answer": "To distribute incoming traffic"}
-            ],
+            ] * 4,
             "communication": [
                 {"question": "Describe a situation where you had to resolve a conflict within a team. What was your approach?"},
-                {"question": "Explain the importance of clear documentation in software development projects."}
+                {"question": "Explain the importance of clear documentation in software development projects."},
+                {"question": "How do you handle tight deadlines while maintaining code quality?"},
+                {"question": "What is your approach to learning a new technology or framework?"},
+                {"question": "Describe your ideal collaborative environment."}
             ],
             "coding": [
                 {
-                    "question": "Write a function 'sum_multiples(n)' that returns the sum of all multiples of 3 or 5 below n.",
-                    "function_name": "sum_multiples",
-                    "input_description": "An integer n",
-                    "example_input": "10",
-                    "example_output": "23 (3+5+6+9)",
-                    "test_cases": [
-                        {"input": 10, "output": 23},
-                        {"input": 15, "output": 45},
-                        {"input": 20, "output": 78}
-                    ]
+                    "question": "Write a function 'sum_multiples(n)' that returns the sum of all multiples of 3 or 5 below n.", "function_name": "sum_multiples", 
+                    "input_description": "n", "example_input": "10", "example_output": "23",
+                    "test_cases": [{"input": 10, "output": 23}, {"input": 15, "output": 45}, {"input": 20, "output": 78}]
+                },
+                {
+                    "question": "Write a function 'is_palindrome(s)' that checks if a string is a palindrome.", "function_name": "is_palindrome", 
+                    "input_description": "s", "example_input": "'racecar'", "example_output": "true",
+                    "test_cases": [{"input": "racecar", "output": "true"}, {"input": "hello", "output": "false"}, {"input": "madam", "output": "true"}]
                 }
             ]
         }

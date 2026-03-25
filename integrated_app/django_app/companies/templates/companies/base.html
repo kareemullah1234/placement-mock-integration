@@ -79,9 +79,12 @@
         </nav>
 
         <div class="p-4 border-t border-slate-800/50">
-            <a href="{% url 'logout' %}" class="block px-4 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10 font-medium text-sm flex items-center gap-3 transition-colors">
-                <i class="fas fa-sign-out-alt w-5"></i> Logout
-            </a>
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-left px-4 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10 font-medium text-sm flex items-center gap-3 transition-colors">
+                    <i class="fas fa-sign-out-alt w-5"></i> Logout
+                </button>
+            </form>
         </div>
     </aside>
 

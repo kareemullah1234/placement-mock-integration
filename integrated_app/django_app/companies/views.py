@@ -23,7 +23,8 @@ def create_job(request):
             title = title,
             description = request.POST.get("description", ""),
             location=request.POST.get("location", ""),
-            salary = request.POST.get("salary") or 0
+            salary = request.POST.get("salary") or 0,
+            is_active=True
         )
         skills_input = request.POST.get("skills")
         if skills_input:
@@ -38,10 +39,21 @@ def create_job(request):
 
 def job_list(request):
     jobs = JobPost.objects.filter(is_active=True).distinct()
+    applied_job_ids = []
+    if request.user.is_authenticated:
+        try:
+            candidate = CandidateProfile.objects.get(user=request.user)
+            applied_job_ids = Application.objects.filter(candidate=candidate).values_list('job_id', flat=True)
+        except CandidateProfile.DoesNotExist:
+            pass
+            
     return render(
         request,
         "companies/job_list.html",
-        {"jobs": jobs}
+        {
+            "jobs": jobs,
+            "applied_job_ids": applied_job_ids
+        }
     )
 
 @login_required

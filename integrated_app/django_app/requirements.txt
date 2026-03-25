@@ -8,6 +8,10 @@ argon2-cffi
 pymysql
 PyPDF2
 google-generativeai
+reportlab
+google-genai
+pytz
+hdfs
 
 # AI / Video / Audio Integration Dependencies
 opencv-python

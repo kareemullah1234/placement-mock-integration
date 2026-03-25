@@ -24,6 +24,10 @@ urlpatterns = [
     path('api/stream-frame/', views.stream_frame, name='stream_frame'),
     path('api/upload-frames/', views.upload_video_frames, name='upload_video_frames'),
     path('api/end/', views.end_interview, name='end_interview'),
+    path('api/terminate/', views.terminate_interview, name='terminate_interview'),
+
+
+
     path('api/request-interview/', views.request_interview, name='request_interview'),
     path('api/current/', views.get_current_interview, name='get_current_interview'),
 

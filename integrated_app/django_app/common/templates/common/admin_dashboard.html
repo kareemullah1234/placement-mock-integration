@@ -23,8 +23,7 @@
         <div class="h-4 bg-[#444746] rounded w-24"></div>
     </div>
 </div>
-
-<!-- Users Table -->
+<!-- Registered Candidates Table -->
 <div class="glass-card overflow-hidden">
     <div class="px-6 py-5 border-b border-[#444746] flex justify-between items-center bg-[#1e1f20]">
         <h2 class="text-xl font-semibold text-[#e3e3e3]"><i class="fas fa-users mr-2 text-[#a8c7fa]"></i>Registered Candidates</h2>
@@ -40,7 +39,6 @@
                 </tr>
             </thead>
             <tbody id="users-table-body" class="divide-y divide-[#444746]">
-                <!-- JS will populate this -->
                 <tr>
                     <td colspan="4" class="px-6 py-12 text-center text-[#8e918f]">
                         <i class="fas fa-spinner fa-spin text-2xl mb-3 text-[#a8c7fa]"></i>
@@ -49,6 +47,61 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+</div>
+<div class="glass-card overflow-hidden mt-10">
+    <div class="px-6 py-5 border-b border-[#444746] flex justify-between items-center bg-[#1e1f20]">
+        <h2 class="text-xl font-semibold text-[#e3e3e3]"><i class="fas fa-microphone-alt mr-2 text-[#c387f5]"></i>Interview Requests</h2>
+        <span id="interview-count-badge" class="px-3 py-1 bg-[#c387f5]/10 text-[#c387f5] rounded-full text-xs font-bold border border-[#c387f5]/20">0 Pending</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#282a2c] text-[#c4c7c5] text-xs uppercase tracking-wider">
+                    <th class="px-6 py-4 font-medium">Candidate</th>
+                    <th class="px-6 py-4 font-medium">Role/Attempt</th>
+                    <th class="px-6 py-4 font-medium">Passing Score</th>
+                    <th class="px-6 py-4 font-medium text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="interviews-table-body" class="divide-y divide-[#444746]">
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-[#8e918f]">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-3 text-[#c387f5]"></i>
+                        <p>Scanning for requests...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Simple Schedule Modal -->
+<div id="scheduleModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="max-w-md w-full glass-card p-8 m-4 shadow-2xl relative">
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+        <h3 class="text-xl font-bold text-white mb-6">Schedule Interview</h3>
+        
+        <input type="hidden" id="modal-interview-id">
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Interview Date & Time (IST)</label>
+                <input type="datetime-local" id="modal-scheduled-at" class="form-input">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Admin Notes (Optional)</label>
+                <textarea id="modal-admin-notes" class="form-input h-24 resize-none" placeholder="Provide instructions for the candidate..."></textarea>
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button onclick="submitApproval()" id="modal-submit-btn" class="flex-grow py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95">
+                    Approve & Schedule
+                </button>
+                <button onclick="closeModal()" class="px-6 py-3 border border-slate-700 text-slate-400 font-bold rounded-xl hover:bg-white/5 transition-all">
+                    Cancel
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -89,6 +142,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="relative z-10">
                         <h3 class="text-[#c4c7c5] font-medium mb-1">Active Jobs</h3>
                         <p class="text-4xl font-bold text-[#fbbc04] mb-2">${data.jobs}</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 text-[#282a2c] opacity-50 group-hover:scale-110 transition-transform duration-500">
+                        <i class="fas fa-microphone-alt text-8xl"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-[#c4c7c5] font-medium mb-1">Pending Interviews</h3>
+                        <p id="pending-interviews-count" class="text-4xl font-bold text-[#c387f5] mb-2">...</p>
                     </div>
                 </div>
             `;
@@ -147,6 +210,118 @@ document.addEventListener('DOMContentLoaded', function() {
                 </tr>
             `;
         });
+
+    // Fetch Interview Requests
+    function loadInterviewRequests() {
+        const tbody = document.getElementById('interviews-table-body');
+        fetch('/interview/api/get_interviews_list/')
+            .then(res => {
+                if (!res.ok) throw new Error("Unauthorized or server error");
+                return res.json();
+            })
+            .then(data => {
+                const pending = data.filter(i => i.status === 'requested');
+                document.getElementById('interview-count-badge').innerText = `${pending.length} Pending`;
+                const countEl = document.getElementById('pending-interviews-count');
+                if(countEl) countEl.innerText = pending.length;
+
+                if (pending.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-[#8e918f]">
+                                <i class="fas fa-check-circle text-2xl mb-3 text-[#34a853]"></i>
+                                <p>All caught up! No pending requests.</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                pending.forEach(i => {
+                    html += `
+                        <tr class="hover:bg-[#1a1b1d] transition-colors border-b border-[#444746]/30">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-[#e3e3e3]">${i.student_name}</div>
+                                <div class="text-xs text-[#8e918f]">${i.student_email}</div>
+                            </td>
+                            <td class="px-6 py-4 text-[#c4c7c5] text-sm">
+                                <span class="px-2 py-1 bg-white/5 rounded-md text-[10px] uppercase font-bold tracking-tighter mr-2">Attempt ${i.attempt_number}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-emerald-400 font-black">${i.overall_score || 'Passed'}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="openScheduleModal(${i.id}, '${i.student_name}')" 
+                                    class="px-5 py-2 bg-[#c387f5]/10 hover:bg-[#c387f5]/20 text-[#c387f5] rounded-full text-xs font-bold border border-[#c387f5]/30 transition-all">
+                                    <i class="fas fa-calendar-check mr-2"></i> Schedule
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Error loading interviews:", err);
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-[#ea4335]"><i class="fas fa-exclamation-triangle mr-2"></i> Failed to fetch requests.</td></tr>`;
+            });
+    }
+
+    loadInterviewRequests();
+
+    // Modal Logic
+    window.openScheduleModal = function(id, name) {
+        document.getElementById('modal-interview-id').value = id;
+        document.getElementById('scheduleModal').classList.remove('hidden');
+        document.getElementById('scheduleModal').classList.add('flex');
+    };
+
+    window.closeModal = function() {
+        document.getElementById('scheduleModal').classList.add('hidden');
+        document.getElementById('scheduleModal').classList.remove('flex');
+    };
+
+    window.submitApproval = function() {
+        const id = document.getElementById('modal-interview-id').value;
+        const scheduled_at = document.getElementById('modal-scheduled-at').value;
+        const admin_notes = document.getElementById('modal-admin-notes').value;
+        const btn = document.getElementById('modal-submit-btn');
+
+        if (!scheduled_at) {
+            alert("Please select a date and time.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        fetch(`/interview/api/interviews/${id}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ scheduled_at, admin_notes })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeModal();
+                loadInterviewRequests();
+                // Optionally show a toast alert here if base.html supports it
+            } else {
+                alert("Error: " + data.error);
+                btn.disabled = false;
+                btn.innerText = "Approve & Schedule";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            btn.disabled = false;
+            btn.innerText = "Approve & Schedule";
+        });
+    };
 });
 </script>
 {% endblock %}

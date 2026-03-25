@@ -64,14 +64,23 @@ def submit_test(request, application_id):
     # ---------- Aptitude Section ----------
     for i, q in enumerate(questions.get("aptitude", [])):
         user_answer = request.POST.get(f"apt{i+1}")
-        if user_answer == q["answer"]:
+        if user_answer == q.get("answer"):
             aptitude_score += 1
 
     # ---------- Skill Section ----------
     for i, q in enumerate(questions.get("skills", [])):
         user_answer = request.POST.get(f"skill{i+1}")
-        if user_answer == q["answer"]:
+        if user_answer == q.get("answer"):
             skill_score += 1
+
+    # ---------- Communication Section ----------
+    communication_responses = {}
+    for i, q in enumerate(questions.get("communication", [])):
+        ans = request.POST.get(f"comm{i+1}")
+        communication_responses[f"q{i+1}"] = {
+            "question": q.get("question"),
+            "answer": ans
+        }
 
     # ---------- Coding Section ----------
     for i, q in enumerate(questions.get("coding", [])):
@@ -83,25 +92,36 @@ def submit_test(request, application_id):
                     user_code,
                     q.get("test_cases", [])
                 )
+                # Score is 0-10 from gemini, scaled to 5 points
                 scaled_score = round((score / 10) * 5)
                 coding_score += scaled_score
             except Exception as e:
                 print(f"Error evaluating code: {e}")
 
     total_score = aptitude_score + skill_score + coding_score
+    
+    # Check if AptitudeTest config exists, else default to 50%
     test = AptitudeTest.objects.filter(job=application.job).first()
+    passing_threshold = test.passing_marks if test else 20 # 20 out of 40 (50%)
 
-    if not test:
-        messages.error(request, "Test not available yet.")
-        return redirect("candidate_dashboard")
+    passed = total_score >= passing_threshold
 
-    passed = total_score >= test.passing_marks
+    # ---------- Malpractice Tracking ----------
+    malpractice_raw = request.POST.get("malpractice_log", "[]")
+    malpractice_log = []
+    try:
+        import json
+        malpractice_log = json.loads(malpractice_raw)
+    except Exception:
+        malpractice_log = []
 
     CandidateTestAttempt.objects.create(
         application=application,
         aptitude_score=aptitude_score,
         skill_score=skill_score,
         coding_score=coding_score,
+        communication_answers=communication_responses,
+        malpractice_log=malpractice_log,
         score=total_score,
         passed=passed
     )

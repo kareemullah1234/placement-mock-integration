@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aptitude Test | Placement Portal</title>
+    <title>Technical Assessment | Placement Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -64,204 +64,607 @@
             0%, 100% { opacity: 0.1; }
             50% { opacity: 0.3; }
         }
+        .step-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .step-hidden {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .step-visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Toast notification */
+        #securityToast {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            transform: translateX(130%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #securityToast.show {
+            transform: translateX(0);
+        }
+        /* Security Violation Modal */
+        #violationModal {
+            display: none;
+        }
+        #violationModal.active {
+            display: flex;
+        }
     </style>
 </head>
-<body class="relative overflow-y-auto py-12 px-4 flex flex-col items-center">
+<body class="relative overflow-y-auto pt-12 pb-32 px-4 flex flex-col items-center">
     <!-- Background Decor -->
     <div class="fixed top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none"></div>
     <div class="fixed bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" style="animation-delay: 2s"></div>
 
-    <div class="w-full max-w-4xl relative z-10">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600/10 rounded-3xl border border-blue-500/20 mb-6">
-                <i class="fas fa-laptop-code text-4xl text-blue-500"></i>
+    <!-- Security Violation Modal -->
+    <div id="violationModal" class="fixed inset-0 z-[9999] items-center justify-center bg-slate-950/95 backdrop-blur-3xl">
+        <div class="max-w-md w-full mx-4 bg-slate-900 border border-red-500/30 rounded-[2.5rem] p-10 text-center shadow-[0_0_80px_rgba(239,68,68,0.15)]">
+            <div class="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                <i class="fas fa-exclamation-triangle text-red-500 text-3xl"></i>
             </div>
-            <h1 class="text-5xl font-extrabold text-white tracking-tight mb-4">Technical Assessment</h1>
-            <p class="text-slate-400 text-lg">Complete all sections to showcase your expertise.</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-3">Security Violation Detected</p>
+            <h2 class="text-2xl font-black text-white mb-4" id="violationTitle">Assessment Auto-Submitted</h2>
+            <p class="text-slate-400 text-sm leading-relaxed mb-8" id="violationDetail">A security policy was violated. Your responses have been recorded and submitted automatically.</p>
+            <button onclick="confirmTermination()" class="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl uppercase tracking-widest text-sm transition-all active:scale-95 shadow-xl shadow-red-500/20">
+                OK — View My Results
+            </button>
         </div>
-
-        <form method="POST" action="{% url 'assessments:submit_test' application_id %}" class="space-y-8">
-            {% csrf_token %}
-            <input type="hidden" name="application_id" value="{{ application_id }}">
-
-            <!-- Section 1: Aptitude -->
-            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
-                <div class="section-header mb-8">
-                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
-                        <i class="fas fa-brain text-blue-400"></i>
-                        Section 1: Aptitude
-                    </h2>
-                    <p class="text-slate-500 text-sm mt-1">Logic and reasoning assessment</p>
-                </div>
-
-                <div class="space-y-10">
-                    {% for q in questions.aptitude %}
-                    <div class="bg-slate-900/40 rounded-2xl p-6 border border-white/5">
-                        <p class="text-lg text-slate-200 font-medium mb-6 flex gap-4">
-                            <span class="text-blue-500 font-bold">#{{ forloop.counter }}</span>
-                            {{ q.question }}
-                        </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {% for option in q.options %}
-                            <label class="flex items-center p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
-                                <input type="radio" name="apt{{ forloop.parentloop.counter }}" value="{{ option }}" required>
-                                <span class="text-slate-300 group-hover:text-white transition-colors">{{ option }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Section 2: Skill Questions -->
-            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
-                <div class="section-header mb-8">
-                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
-                        <i class="fas fa-tools text-emerald-400"></i>
-                        Section 2: Skill Questions
-                    </h2>
-                    <p class="text-slate-500 text-sm mt-1">Core technical competency check</p>
-                </div>
-
-                <div class="space-y-10">
-                    {% for q in questions.skills %}
-                    <div class="bg-slate-900/40 rounded-2xl p-6 border border-white/5">
-                        <p class="text-lg text-slate-200 font-medium mb-6 flex gap-4">
-                            <span class="text-emerald-500 font-bold">#{{ forloop.counter }}</span>
-                            {{ q.question }}
-                        </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {% for option in q.options %}
-                            <label class="flex items-center p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
-                                <input type="radio" name="skill{{ forloop.parentloop.counter }}" value="{{ option }}" required>
-                                <span class="text-slate-300 group-hover:text-white transition-colors">{{ option }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Section 3: Communication -->
-            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
-                <div class="section-header mb-8">
-                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
-                        <i class="fas fa-comments text-purple-400"></i>
-                        Section 3: Communication
-                    </h2>
-                    <p class="text-slate-500 text-sm mt-1">Written expression and soft skills</p>
-                </div>
-
-                <div class="space-y-10">
-                    {% for q in questions.communication %}
-                    <div class="bg-slate-900/40 rounded-2xl p-6 border border-white/5">
-                        <p class="text-lg text-slate-200 font-medium mb-6 flex gap-4">
-                            <span class="text-purple-500 font-bold">#{{ forloop.counter }}</span>
-                            {{ q.question }}
-                        </p>
-                        <textarea name="comm{{ forloop.counter }}" rows="4" 
-                            class="w-full rounded-xl p-4 resize-none transition-all placeholder-slate-600"
-                            placeholder="Type your response here..." required></textarea>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Section 4: Coding -->
-            <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
-                <div class="section-header mb-8">
-                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
-                        <i class="fas fa-code text-amber-400"></i>
-                        Coding Challenge
-                    </h2>
-                    <p class="text-slate-500 text-sm mt-1">Algorithm implementation and problem solving</p>
-                </div>
-
-                <div class="space-y-12">
-                    {% for q in questions.coding %}
-                    <div class="bg-[#0f172a] rounded-3xl border border-white/10 overflow-hidden">
-                        <!-- Challenge Info -->
-                        <div class="p-8 border-b border-white/5">
-                            <h3 class="text-xl font-bold text-white mb-4">{{ q.question }}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="bg-slate-900/80 p-4 rounded-xl border border-white/5">
-                                    <p class="text-xs uppercase font-bold text-slate-500 tracking-wider mb-2">Example Input</p>
-                                    <code class="text-amber-200 text-sm">{{ q.example_input|safe }}</code>
-                                </div>
-                                <div class="bg-slate-900/80 p-4 rounded-xl border border-white/5">
-                                    <p class="text-xs uppercase font-bold text-slate-500 tracking-wider mb-2">Example Output</p>
-                                    <code class="text-emerald-400 text-sm">{{ q.example_output|safe }}</code>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Editor Controls -->
-                        <div class="bg-slate-900/50 px-8 py-4 flex items-center justify-between border-b border-white/5">
-                            <div class="flex items-center gap-4">
-                                <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">Environment</span>
-                                <select id="language{{ forloop.counter }}" onchange="setTemplate({{ forloop.counter }})"
-                                    class="rounded-lg px-4 py-2 text-sm font-semibold border-white/10">
-                                    <option value="71">Python 3</option>
-                                    <option value="54">C++ 17</option>
-                                    <option value="62">Java 11</option>
-                                    <option value="63">JavaScript</option>
-                                </select>
-                            </div>
-                            <button type="button" onclick="runCode({{ forloop.counter }}, '{{ q.function_name }}')"
-                                class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center gap-2">
-                                <i class="fas fa-play text-[10px]"></i> Run Code
-                            </button>
-                        </div>
-
-                        <!-- Editor Area -->
-                        <div class="relative">
-                            <textarea id="code{{ forloop.counter }}" rows="12" 
-                                class="w-full code-editor p-8 resize-none text-[15px] leading-relaxed focus:ring-0 border-none"
-                                spellcheck="false"></textarea>
-                        </div>
-
-                        <!-- Output Console -->
-                        <div class="bg-black/40 p-6 border-t border-white/5">
-                            <div class="flex items-center gap-2 mb-3">
-                                <div class="w-2 h-2 rounded-full bg-slate-600"></div>
-                                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Console Output</span>
-                            </div>
-                            <pre id="output{{ forloop.counter }}" class="text-sm font-mono text-slate-400 min-h-[40px] whitespace-pre-wrap">Ready to execute...</pre>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Submit Action -->
-            <div class="flex flex-col items-center pt-10 pb-20">
-                <button type="submit" 
-                    class="group relative inline-flex items-center justify-center px-10 py-5 font-bold text-white transition-all duration-200 bg-blue-600 font-pj rounded-2xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-500/20 active:scale-95">
-                    Submit Assessment
-                    <i class="fas fa-arrow-right ml-3 group-hover:translate-x-1 transition-transform"></i>
-                </button>
-                <p class="text-slate-500 text-sm mt-6 flex items-center gap-2">
-                    <i class="fas fa-lock text-[10px]"></i>
-                    Responses are automatically saved.
-                </p>
-            </div>
-        </form>
-
-        <p class="text-center text-slate-600 text-xs font-medium uppercase tracking-widest mb-12">
-            &copy; 2026 Placement Portal • Secure Evaluation Environment
-        </p>
     </div>
 
-    <!-- JSON DATA -->
-    <script>
-        const codingQuestions = {{ questions.coding|safe }};
-    </script>
+    <!-- Security Toast Notification -->
+    <div id="securityToast">
+        <div class="flex items-center gap-4 bg-slate-900/95 backdrop-blur-2xl border border-red-500/30 rounded-2xl px-6 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] min-w-[280px]">
+            <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0 border border-red-500/20">
+                <i class="fas fa-ban text-red-500 text-sm"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-black uppercase tracking-widest text-red-400">Action Blocked</p>
+                <p id="toastMessage" class="text-sm font-bold text-white mt-0.5">This action is not allowed.</p>
+            </div>
+        </div>
+    </div>
 
-    <!-- CORE LOGIC -->
+    <!-- Integrity Check Modal -->
+    <div id="integrityModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-3xl transition-all duration-700">
+        <div class="max-w-md w-full glass-card p-10 rounded-[3rem] text-center border-blue-500/20 shadow-[0_0_100px_rgba(37,99,235,0.15)]">
+            <div class="w-20 h-20 bg-blue-600/20 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-bounce-slow">
+                <i class="fas fa-shield-alt text-blue-400 text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-black text-white mb-4">Secure Environment</h1>
+            <p class="text-slate-400 mb-10 leading-relaxed font-medium">To maintain assessment integrity, you must grant access to your <span class="text-white">Webcam</span> and <span class="text-white">Full Screen</span>. The session will automatically terminate if access is revoked.</p>
+            
+            <button type="button" onclick="startProctoring()" class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all transform active:scale-95 shadow-[0_15px_30px_rgba(37,99,235,0.3)]">
+                Initialize Secure Session
+            </button>
+            
+            <p class="mt-6 text-[10px] text-slate-500 font-black uppercase tracking-widest">Powered by Gemini Proctor Engine</p>
+        </div>
+    </div>
+
+    <div class="w-full max-w-4xl relative z-10 opacity-20 transition-opacity duration-1000" id="mainAssessmentContainer">
+        <!-- Sticky Progress Header -->
+        <div class="sticky top-4 z-50 mb-12">
+            <div class="glass-card rounded-2xl px-6 py-4 flex items-center justify-between border-blue-500/20 shadow-2xl">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <i class="fas fa-microchip text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-widest text-white">Assessment <span id="stepIndicatorHeader">1/4</span></h2>
+                        <div class="w-32 bg-slate-800 h-1 mt-1 rounded-full overflow-hidden">
+                            <div id="progressInner" class="bg-blue-500 h-full transition-all duration-500" style="width: 25%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div id="timer" class="text-xl font-mono font-bold text-blue-400 tabular-nums">45:00</div>
+                    <div class="h-8 w-px bg-white/10"></div>
+                    <span class="text-[8px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded-md">
+                        <div class="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
+                        Secure
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proctoring UI -->
+        <div id="proctor-panel" class="fixed top-24 right-6 w-48 z-[60] transition-all duration-500 transform translate-x-full opacity-0">
+            <div class="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                <div class="relative aspect-video bg-black/40">
+                    <video id="proctorVideo" autoplay playsinline muted class="w-full h-full object-cover grayscale opacity-60"></video>
+                    <div class="absolute inset-0 bg-blue-500/5 mix-blend-overlay"></div>
+                    <div class="absolute top-2 left-2 flex items-center gap-1.5 bg-red-500/80 px-2 py-0.5 rounded-full ring-1 ring-white/20">
+                        <div class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                        <span class="text-[8px] font-black text-white uppercase tracking-tighter">Live Monitor</span>
+                    </div>
+                </div>
+                <div class="p-3 border-t border-white/5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Integrity</span>
+                        <span class="text-[9px] font-black text-emerald-400">ACTIVE</span>
+                    </div>
+                    <div id="violation-box" class="flex items-center gap-2 bg-red-500/5 border border-red-500/10 p-2 rounded-lg opacity-0 transition-opacity">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-[10px]"></i>
+                        <span class="text-[9px] text-red-300 font-bold"><span id="violation-count">0</span> Security Events</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form id="testForm" method="POST" action="{% url 'assessments:submit_test' application_id %}" class="space-y-8">
+            {% csrf_token %}
+            <input type="hidden" name="malpractice_log" id="malpracticeLog" value="[]">
+            
+            <div id="step1" class="step-transition step-visible space-y-8">
+                <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                    <div class="section-header mb-12">
+                        <div class="flex items-center gap-4 mb-2">
+                             <span class="text-[10px] font-black bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full uppercase">Step 1</span>
+                             <h2 class="text-3xl font-black text-white tracking-tight">Logical Aptitude</h2>
+                        </div>
+                        <p class="text-slate-500 text-sm">A series of 15 questions to evaluate your logical and mathematical reasoning.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        {% for q in questions.aptitude %}
+                        <div class="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-blue-500/20 transition-all group">
+                            <div class="flex gap-4 mb-4">
+                                <span class="flex-shrink-0 w-8 h-8 bg-blue-600/10 rounded-lg flex items-center justify-center text-blue-500 font-extrabold border border-blue-500/10 text-[10px]">{{ forloop.counter }}</span>
+                                <p class="text-base text-slate-200 font-bold leading-tight pt-1">{{ q.question }}</p>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pl-12">
+                                {% for option in q.options %}
+                                <label class="flex items-center p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-blue-500/5 hover:border-blue-500/30 transition-all cursor-pointer group/opt">
+                                    <input type="radio" name="apt{{ forloop.parentloop.counter }}" value="{{ option }}" required>
+                                    <span class="text-slate-400 group-hover/opt:text-white transition-colors font-medium text-sm">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div id="step2" class="step-transition step-hidden space-y-8">
+                <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                    <div class="section-header mb-12">
+                        <div class="flex items-center gap-4 mb-2">
+                             <span class="text-[10px] font-black bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full uppercase">Step 2</span>
+                             <h2 class="text-3xl font-black text-white tracking-tight">Technical Domain</h2>
+                        </div>
+                        <p class="text-slate-500 text-sm">15 core technical questions based on your specific job profile requirements.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        {% for q in questions.skills %}
+                        <div class="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-emerald-500/20 transition-all group">
+                            <div class="flex gap-4 mb-4">
+                                <span class="flex-shrink-0 w-8 h-8 bg-emerald-600/10 rounded-lg flex items-center justify-center text-emerald-500 font-extrabold border border-emerald-500/10 text-[10px]">{{ forloop.counter }}</span>
+                                <p class="text-base text-slate-200 font-bold leading-tight pt-1">{{ q.question }}</p>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pl-12">
+                                {% for option in q.options %}
+                                <label class="flex items-center p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all cursor-pointer group/opt">
+                                    <input type="radio" name="skill{{ forloop.parentloop.counter }}" value="{{ option }}" required>
+                                    <span class="text-slate-400 group-hover/opt:text-white transition-colors font-medium text-sm">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div id="step3" class="step-transition step-hidden space-y-8">
+                <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                    <div class="section-header mb-12">
+                        <div class="flex items-center gap-4 mb-2">
+                             <span class="text-[10px] font-black bg-purple-600/20 text-purple-400 px-3 py-1 rounded-full uppercase">Step 3</span>
+                             <h2 class="text-3xl font-black text-white tracking-tight">Communication Skills</h2>
+                        </div>
+                        <p class="text-slate-500 text-sm">5 descriptive scenarios to evaluate your written expression and soft skills.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        {% for q in questions.communication %}
+                        <div class="bg-white/5 rounded-2xl p-6 border border-white/5 hover:border-purple-500/10 transition-all">
+                            <div class="flex gap-4 mb-4">
+                                <span class="flex-shrink-0 w-8 h-8 bg-purple-600/10 rounded-lg flex items-center justify-center text-purple-500 font-extrabold border border-purple-500/10 text-[10px]">{{ forloop.counter }}</span>
+                                <p class="text-base text-slate-200 font-bold pt-1">{{ q.question }}</p>
+                            </div>
+                            <div class="pl-12">
+                                <textarea name="comm{{ forloop.counter }}" rows="5" required
+                                    class="w-full rounded-xl p-4 bg-slate-950/40 border border-white/5 focus:border-purple-500/50 outline-none transition-all placeholder-slate-700 text-slate-300 leading-relaxed font-medium text-sm"
+                                    placeholder="Briefly describe your thoughts..."></textarea>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div id="step4" class="step-transition step-hidden space-y-8">
+                <div class="glass-card rounded-[2.5rem] p-8 sm:p-12">
+                    <div class="section-header mb-12">
+                        <div class="flex items-center gap-4 mb-2">
+                             <span class="text-[10px] font-black bg-amber-600/20 text-amber-400 px-3 py-1 rounded-full uppercase">Final Step</span>
+                             <h2 class="text-3xl font-black text-white tracking-tight">Coding Challenges</h2>
+                        </div>
+                        <p class="text-slate-500 text-sm">Implement 2 efficient algorithms. Use the run code feature to test against hidden cases.</p>
+                    </div>
+
+                    <div class="space-y-16">
+                        {% for q in questions.coding %}
+                        <div class="bg-[#0f172a] rounded-[2rem] border border-white/10 overflow-hidden shadow-2xl">
+                             <div class="p-8 bg-slate-900/40 border-b border-white/5">
+                                 <h3 class="text-base font-black text-blue-400 mb-4">{{ forloop.counter }}. {{ q.question }}</h3>
+                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                     <div class="bg-black/20 p-5 rounded-2xl border border-white/5">
+                                         <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                             <i class="fas fa-sign-in-alt"></i> Example Input
+                                         </p>
+                                         <code class="text-amber-200/90 text-sm font-mono">{{ q.example_input|safe }}</code>
+                                     </div>
+                                     <div class="bg-black/20 p-5 rounded-2xl border border-white/5">
+                                         <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                             <i class="fas fa-sign-out-alt"></i> Example Output
+                                         </p>
+                                         <code class="text-emerald-400/90 text-sm font-mono">{{ q.example_output|safe }}</code>
+                                     </div>
+                                 </div>
+                             </div>
+
+                             <div class="bg-slate-900/60 px-8 py-5 flex items-center justify-between border-b border-white/5">
+                                 <div class="flex items-center gap-5">
+                                     <select id="language{{ forloop.counter }}" onchange="setTemplate({{ forloop.counter }})"
+                                         class="rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-widest border border-white/10 bg-slate-950/80 outline-none focus:border-blue-500 transition-all">
+                                         <option value="71">Python 3</option>
+                                         <option value="54">C++ 17</option>
+                                         <option value="62">Java 11</option>
+                                         <option value="63">JavaScript</option>
+                                     </select>
+                                     <span class="w-px h-6 bg-white/10"></span>
+                                     <p class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Safe Execution Engine</p>
+                                 </div>
+                                 <button type="button" onclick="runCode({{ forloop.counter }}, '{{ q.function_name }}')"
+                                     class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center gap-3 group">
+                                     <i class="fas fa-play text-[8px] group-hover:scale-110 transition-transform"></i>
+                                     Run Code
+                                 </button>
+                             </div>
+
+                             <textarea id="code{{ forloop.counter }}" name="code{{ forloop.counter }}" rows="14" 
+                                 class="w-full code-editor p-10 resize-none text-[15px] leading-relaxed focus:ring-0 border-none outline-none"
+                                 spellcheck="false"></textarea>
+
+                             <div class="bg-black/60 p-8 border-t border-white/5">
+                                 <pre id="output{{ forloop.counter }}" class="text-sm font-mono text-slate-500 min-h-[50px] whitespace-pre-wrap leading-relaxed">Compilation results will appear here...</pre>
+                             </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky Global Navigation -->
+            <div class="fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-2xl border-t border-white/5 py-6 px-4 z-50">
+                <div class="max-w-4xl mx-auto flex items-center justify-between">
+                    <button type="button" id="prevBtn" onclick="changeStep(-1)" 
+                        class="px-10 py-4 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all disabled:opacity-0 hidden">
+                        <i class="fas fa-arrow-left mr-3"></i> Back
+                    </button>
+                    
+                    <div class="hidden md:flex gap-2" id="stepDots">
+                        <div class="w-2.5 h-2.5 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+                    </div>
+
+                    <button type="button" id="nextBtn" onclick="changeStep(1)" 
+                        class="px-12 py-4 bg-white text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-blue-50 transition-all transform active:scale-95 flex items-center gap-3 group">
+                        Next Section <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+
+                    <button type="submit" id="submitBtn" 
+                        class="px-12 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_12px_24px_rgba(37,99,235,0.4)] hover:bg-blue-500 transition-all transform active:scale-95 hidden flex items-center gap-3 group">
+                        Submit Final Assessment <i class="fas fa-cloud-upload-alt group-hover:scale-110 transition-transform"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Logic -->
     <script>
+        // Proctoring Engine
+        const proctorLog = [];
+        let screenStream = null;
+        let mainTimerStarted = false;
+
+        const logEvent = (type, detail) => {
+            const entry = { type, detail, time: new Date().toLocaleTimeString() };
+            proctorLog.push(entry);
+            const logEl = document.getElementById('malpracticeLog');
+            if(logEl) logEl.value = JSON.stringify(proctorLog);
+            
+            const vCount = document.getElementById('violation-count');
+            const vBox = document.getElementById('violation-box');
+            if(vCount) vCount.innerText = proctorLog.length;
+            if(vBox) vBox.classList.remove('opacity-0');
+        };
+
+        // Secure Initialization Hook (Strict Mode)
+        // isProctoringActive = false means listeners do nothing until assessment is live
+        let isProctoringActive = false;
+
+        async function startProctoring() {
+            try {
+                // 1. Full Screen Browser Check
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+
+                // 2. Webcam Access
+                const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const videoEl = document.getElementById('proctorVideo');
+                if (videoEl) videoEl.srcObject = camStream;
+
+                // 3. Screen Share Access
+                // The screen share picker dialog causes blur/visibilitychange events.
+                // isProctoringActive is still false here, so those events are ignored safely.
+                screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+                    video: { displaySurface: "monitor" },
+                });
+
+                // 4. UI Transition
+                document.getElementById('integrityModal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('mainAssessmentContainer').classList.remove('opacity-20');
+                document.getElementById('proctor-panel').classList.remove('translate-x-full', 'opacity-0');
+
+                // Start internal logic
+                startMainTimer();
+                logEvent('STRICT_START', 'Secure environment locked. Candidate is now active.');
+
+                // Wait 1.5s for browser to settle after all dialogs close, THEN arm listeners
+                setTimeout(() => {
+                    isProctoringActive = true;
+                    // Protect screen share: trigger grace period instead of instant death
+                    screenStream.getVideoTracks()[0].onended = () => {
+                        if (isProctoringActive && !isTerminated) {
+                            startSecurityGracePeriod('SCREEN_STOPPED', 'Screen sharing was stopped. You must restart it immediately.');
+                        }
+                    };
+                }, 1500);
+
+
+            } catch (err) {
+                console.error("Proctoring Start Failed:", err);
+                alert("ACCESS DENIED: You must provide all permissions and stay in full-screen to proceed.");
+                logEvent('INIT_FAILURE', 'User denied necessary security permissions');
+            }
+        }
+
+        let isTerminated = false; // Guard against double-submission
+
+        function terminateAssessment(reason) {
+            if (isTerminated) return; // Already terminated, ignore
+            isTerminated = true;
+            isProctoringActive = false; // Disarm all listeners
+
+            logEvent('TERMINATION', `Automated termination triggered: ${reason}`);
+
+            // Show the custom modal instead of native alert()
+            const reasonMap = {
+                'EXIT_FULLSCREEN': ['Fullscreen Exited', 'You exited full-screen mode. This is a security violation.'],
+                'WINDOW_BLUR': ['Window Focus Lost', 'You switched to another window during the assessment.'],
+                'SCREEN_STOPPED': ['Screen Share Stopped', 'Your screen sharing was terminated during the assessment.'],
+            };
+            const [title, detail] = reasonMap[reason] || ['Security Violation', `Reason: ${reason}`];
+            document.getElementById('violationTitle').textContent = title;
+            document.getElementById('violationDetail').textContent = detail + ' Your responses have been automatically submitted.';
+            document.getElementById('violationModal').classList.add('active');
+        }
+
+        function confirmTermination() {
+            // Exit fullscreen gracefully first, then submit
+            if (document.fullscreenElement) {
+                document.exitFullscreen().finally(() => {
+                    document.getElementById('testForm').submit();
+                });
+            } else {
+                document.getElementById('testForm').submit();
+            }
+        }
+
+        // --- Unified Security Grace Period Manager ---
+        let violationGracePeriod = 10;
+        let violationTimer = null;
+
+        function startSecurityGracePeriod(type, reason) {
+            if (violationTimer || !isProctoringActive || isTerminated) return;
+            
+            logEvent(type, `Grace period started: ${reason}`);
+            violationGracePeriod = 10; // Reset countdown
+            
+            // Show alert/modal 
+            alert(`⚠️ SECURITY ALERT: ${reason}\n\nYou have 10 SECONDS to return and restore fullscreen/focus or your assessment will be automatically TERMINATED.`);
+
+            violationTimer = setInterval(() => {
+                violationGracePeriod--;
+                console.log(`Security violation countdown: ${violationGracePeriod}s`);
+                if (violationGracePeriod <= 0) {
+                    clearInterval(violationTimer);
+                    logEvent('SECURITY_TERMINATION', `Automated submission due to 10s ${type} violation`);
+                    document.getElementById('testForm').submit();
+                }
+            }, 1000);
+        }
+
+        function clearSecurityGracePeriod(type) {
+            if (violationTimer) {
+                clearInterval(violationTimer);
+                violationTimer = null;
+                logEvent(type, `User returned within grace period (${violationGracePeriod}s remaining)`);
+                violationGracePeriod = 10;
+            }
+        }
+
+        // A. Fullscreen escape detection
+        document.addEventListener('fullscreenchange', () => {
+            if (!isProctoringActive || isTerminated) return;
+            if (!document.fullscreenElement) {
+                startSecurityGracePeriod('FULLSCREEN_EXIT', 'Fullscreen mode disabled.');
+            } else {
+                clearSecurityGracePeriod('FULLSCREEN_RESTORED');
+            }
+        });
+
+        // B. Window Focus (Blur/Focus)
+        window.addEventListener('blur', () => {
+            startSecurityGracePeriod('WINDOW_BLUR', 'Window focus lost.');
+        });
+
+        window.addEventListener('focus', () => {
+            clearSecurityGracePeriod('WINDOW_FOCUS_RESTORED');
+        });
+
+        // C. Visibility change (Tab switch)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                startSecurityGracePeriod('TAB_HIDDEN', 'Assessment tab is no longer visible.');
+            } else {
+                clearSecurityGracePeriod('TAB_VISIBLE');
+            }
+        });
+
+        // C. Keyboard Lock (Block Shortcuts)
+        document.addEventListener('keydown', (e) => {
+            // Block F12, Ctrl+U, Ctrl+Shift+I, Ctrl+Shift+J, Alt+Tab
+            if (e.keyCode === 123 || 
+               (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
+               (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+                logEvent('INPUT_VIOLATION', `Prohibited key combo: ${e.key}`);
+                return false;
+            }
+        });
+
+        let toastTimer = null;
+        function showToast(message) {
+            const toast = document.getElementById('securityToast');
+            const msg = document.getElementById('toastMessage');
+            msg.textContent = message;
+            toast.classList.add('show');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        document.addEventListener('copy', (e) => {
+            e.preventDefault();
+            logEvent('COPY_ATTEMPT', 'User tried to copy assessment content');
+            showToast('⚠️ Copying is not allowed during the assessment.');
+        });
+
+        document.addEventListener('paste', (e) => {
+            e.preventDefault();
+            logEvent('PASTE_ATTEMPT', 'User tried to paste external content');
+            showToast('⚠️ Pasting is not allowed during the assessment.');
+        });
+
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            logEvent('RIGHT_CLICK', 'Right-click menu blocked');
+            showToast('⚠️ Right-click is disabled in this secure environment.');
+        });
+
+        const totalSteps = 4;
+        let currentStep = 1;
+        const codingQuestions = {{ questions.coding|safe }};
+
+        function changeStep(n) {
+            // Validation check (optional but good for premium feel)
+            const currentEl = document.getElementById(`step${currentStep}`);
+            const inputs = currentEl.querySelectorAll('input[required], textarea[required]');
+            let valid = true;
+            
+            // For demo, let's allow bypassing but we can add validation here
+            // if (n > 0) { ... check validity ... }
+
+            // Hide current
+            currentEl.classList.remove('step-visible');
+            currentEl.classList.add('step-hidden');
+
+            currentStep += n;
+
+            // Show next
+            const nextEl = document.getElementById(`step${currentStep}`);
+            nextEl.classList.remove('step-hidden');
+            nextEl.classList.add('step-visible');
+
+            // Update UI components
+            updateNavigation();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateNavigation() {
+            const nextBtn = document.getElementById('nextBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const stepDots = document.getElementById('stepDots').children;
+            const headerStep = document.getElementById('stepIndicatorHeader');
+            const progressInner = document.getElementById('progressInner');
+
+            headerStep.innerText = `${currentStep}/${totalSteps}`;
+            progressInner.style.width = `${(currentStep / totalSteps) * 100}%`;
+
+            // Dots
+            Array.from(stepDots).forEach((dot, idx) => {
+                if (idx + 1 === currentStep) {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]";
+                } else if (idx + 1 < currentStep) {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                } else {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-slate-800";
+                }
+            });
+
+            // Buttons visibility
+            nextBtn.classList.toggle('hidden', currentStep === totalSteps);
+            submitBtn.classList.toggle('hidden', currentStep !== totalSteps);
+            prevBtn.classList.toggle('hidden', currentStep === 1);
+        }
+
+        // Timer Logic (Starts only after Proctoring initialized)
+        function startMainTimer() {
+            if (mainTimerStarted) return;
+            mainTimerStarted = true;
+            
+            let timeLeft = 45 * 60;
+            const timerEl = document.getElementById('timer');
+            const countInterval = setInterval(() => {
+                let mins = Math.floor(timeLeft / 60);
+                let secs = timeLeft % 60;
+                timerEl.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                if (timeLeft <= 300) timerEl.classList.add('text-red-500', 'animate-pulse');
+                if (timeLeft <= 0) {
+                    clearInterval(countInterval);
+                    document.getElementById('testForm').submit();
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        // Coding Editor logic (from original)
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -278,18 +681,10 @@
         }
 
         function getTemplate(language, functionName) {
-            if (language == 71) {
-                return `def ${functionName}(data):\n    # Write your code here\n    \n    pass\n`;
-            }
-            if (language == 54) {
-                return `#include <vector>\n#include <string>\nusing namespace std;\n\nauto ${functionName}(auto data) {\n    // Write your code here\n\n}\n`;
-            }
-            if (language == 62) {
-                return `public static int ${functionName}(String data) {\n    // Write your code here\n\n    return 0;\n}\n`;
-            }
-            if (language == 63) {
-                return `function ${functionName}(data) {\n    // Write your code here\n\n}\n`;
-            }
+            if (language == 71) return `def ${functionName}(data):\n    # Write your code here\n    \n    pass\n`;
+            if (language == 54) return `#include <iostream>\n#include <string>\n#include <vector>\n\nusing namespace std;\n\nstring ${functionName}(string data) {\n    // Write your code here\n    \n    return "";\n}\n`;
+            if (language == 62) return `public static String ${functionName}(String data) {\n    // Write your code here\n\n    return "";\n}\n`;
+            if (language == 63) return `function ${functionName}(data) {\n    // Write your code here\n\n}\n`;
             return "";
         }
 
@@ -314,22 +709,14 @@
             const testCases = codingQuestions[i - 1].test_cases;
             const outputEl = document.getElementById("output" + i);
 
-            outputEl.innerText = "Executing...";
-            outputEl.classList.remove("text-red-400", "text-emerald-400");
+            outputEl.innerText = "Executing across secure nodes...";
+            outputEl.classList.remove("text-red-400", "text-emerald-400", "text-slate-500");
             outputEl.classList.add("text-blue-400");
 
             fetch("/assessments/run-code/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken")
-                },
-                body: JSON.stringify({
-                    code: code,
-                    language: language,
-                    test_cases: testCases,
-                    function_name: functionName
-                })
+                headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+                body: JSON.stringify({ code, language, test_cases: testCases, function_name: functionName })
             })
             .then(res => res.json())
             .then(data => {
@@ -339,24 +726,17 @@
                     outputEl.classList.add("text-red-400");
                     return;
                 }
-
                 let text = "";
                 if (data.results) {
-                    data.results.forEach(r => {
-                        text += r + "\n";
-                    });
-                    text += `\nFinal Result: ${data.passed}/${data.total} Test Cases Passed`;
-                    
-                    if (data.passed === data.total) {
-                        outputEl.classList.add("text-emerald-400");
-                    } else {
-                        outputEl.classList.add("text-amber-400");
-                    }
+                    data.results.forEach(r => text += r + "\n");
+                    text += `\nVerification Complete: ${data.passed}/${data.total} Passed`;
+                    if (data.passed === data.total) outputEl.classList.add("text-emerald-400");
+                    else outputEl.classList.add("text-amber-400");
                 }
                 outputEl.innerText = text;
             })
             .catch(err => {
-                outputEl.innerText = "Error connecting to execution server.";
+                outputEl.innerText = "Connection lost to execution bridge.";
                 outputEl.classList.add("text-red-400");
             });
         }

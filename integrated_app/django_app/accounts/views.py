@@ -71,8 +71,14 @@ def user_login(request):
 
         if user is not None:
             login(request, user)
-            if user.role == 'candidate':
-                return redirect("candidate_dashboard")
+            if user.role == 'admin' or user.is_superuser:
+                return redirect("admin_dashboard")
+            elif user.role == 'candidate':
+                candidate, _ = CandidateProfile.objects.get_or_create(user=user)
+                if not candidate.resume:
+                    messages.info(request, "Please upload your resume to get started.")
+                    return redirect("candidates:candidate_profile")
+                return redirect("candidates:candidate_dashboard")
             elif user.role == 'company':
                 company, _ = CompanyProfile.objects.get_or_create(user=user)
                 if not company.company_name:
@@ -88,11 +94,16 @@ def redirect_user(request):
     if not request.user.is_authenticated:
         return redirect("login")
         
-    if request.user.is_superuser:
-        return redirect("/admin/")
+    if request.user.is_superuser or request.user.role == 'admin':
+        return redirect("admin_dashboard")
 
     if request.user.role == 'candidate':
-        return redirect("candidate_dashboard")
+        candidate, created = CandidateProfile.objects.get_or_create(user=request.user)
+        # Force resume upload if missing
+        if not candidate.resume:
+            messages.info(request, "Welcome! Please upload your resume to complete your profile before accessing the dashboard.")
+            return redirect("candidates:candidate_profile")
+        return redirect("candidates:candidate_dashboard")
 
     if request.user.role == 'company':
         return redirect("companies:company_dashboard")

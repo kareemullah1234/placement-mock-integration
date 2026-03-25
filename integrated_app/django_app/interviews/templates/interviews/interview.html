@@ -19,12 +19,12 @@
    <p class="mb-4 text-yellow-400">
     Violations:
     <span class="font-bold text-red-400" id="violationCount">
-     1
+     0
     </span>
-    /2
+    /3
    </p>
    <p class="text-sm text-gray-400 mb-6">
-    After 2 violations, your interview will be automatically terminated.
+    After 3 violations, your interview will be automatically terminated.
    </p>
    <button class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg" id="returnToInterviewBtn">
     Return to Interview
@@ -35,7 +35,7 @@
   <div class="bg-gray-800 p-6 rounded-lg max-w-6xl w-full max-h-screen overflow-y-auto text-center">
    <div class="sticky top-0 bg-gray-800 pb-4 mb-6 border-b border-gray-600">
     <h2 class="text-3xl font-bold mb-3 text-white">
-     Mock Interview - Ready to Start?
+     Company Interview - Ready to Start?
     </h2>
     <p class="text-gray-300 mb-4">
      Please read all instructions below carefully before starting your
@@ -793,8 +793,10 @@
     let streamingInterval = null;
     let interviewId = null;
     let proctoringActive = false;
-    let violationCount = 0;
-    let maxViolations = 2;
+    let violationCount = parseInt(sessionStorage.getItem('interview_violation_count') || '0');
+    let maxViolations = 3; // Termination on 3rd violation
+    let violationGraceTimer = null;
+    let violationGracePeriod = 10; // 10 seconds grace period
     let isFullscreen = false;
     let hasFocus = true;
     let proctoringStartTime = null;
@@ -1930,19 +1932,53 @@ class KafkaVideoStreamer {
         }
 
         handleVisibilityChange() {
-            if (document.hidden && this.isActive && !interviewTerminated) {
-                this.recordViolation('tab_switch', 'Switched tab or minimized window');
+            if (!this.isActive || interviewTerminated) return;
+
+            if (document.hidden) {
+                console.log('⚠️ Tab hidden - starting grace period');
+                this.startViolationGracePeriod('tab_switch', 'You switched tabs or minimized the window.');
+            } else {
+                this.clearViolationGracePeriod('tab_return');
             }
         }
 
         handleFocus() {
             hasFocus = true;
+            this.clearViolationGracePeriod('focus_return');
         }
 
         handleBlur() {
             hasFocus = false;
             if (this.isActive && !interviewTerminated) {
-                this.recordViolation('focus_loss', 'Lost window focus');
+                console.log('⚠️ Window blurred - starting grace period');
+                this.startViolationGracePeriod('focus_loss', 'Window lost focus.');
+            }
+        }
+
+        startViolationGracePeriod(type, message) {
+            if (violationGraceTimer) return; // Already counting
+
+            let secondsLeft = violationGracePeriod;
+            this.showViolationWarning({ message: `${message} Return within ${secondsLeft}s to avoid a violation recorded.` });
+
+            violationGraceTimer = setInterval(() => {
+                secondsLeft--;
+                const countDisplay = document.getElementById('violationCount');
+                if (countDisplay) countDisplay.textContent = `RETURN NOW: ${secondsLeft}s`;
+
+                if (secondsLeft <= 0) {
+                    this.recordViolation(type, message);
+                    this.clearViolationGracePeriod('timeout');
+                }
+            }, 1000);
+        }
+
+        clearViolationGracePeriod(reason) {
+            if (violationGraceTimer) {
+                clearInterval(violationGraceTimer);
+                violationGraceTimer = null;
+                console.log(`✅ Violation grace period cleared: ${reason}`);
+                document.getElementById('proctoringModal').style.display = 'none';
             }
         }
 
@@ -2022,6 +2058,9 @@ class KafkaVideoStreamer {
 
             violations.push(violation);
             violationCount++;
+            
+            // Persist to session storage
+            sessionStorage.setItem('interview_violation_count', violationCount);
 
             this.saveViolationsToStorage();
             this.updateViolationCounter();
@@ -2048,12 +2087,25 @@ class KafkaVideoStreamer {
 
         loadViolationsFromStorage() {
             try {
+                // Check sessionStorage first for fresh page loads
+                const persistedCount = sessionStorage.getItem('interview_violation_count');
+                if (persistedCount) {
+                    violationCount = parseInt(persistedCount);
+                }
+
                 if (window.proctoringData) {
                     const data = window.proctoringData;
                     violations = data.violations || [];
-                    violationCount = data.violationCount || 0;
+                    // Only use window data if it is greater (handles component re-init)
+                    violationCount = Math.max(violationCount, data.violationCount || 0);
                     proctoringStartTime = data.startTime || Date.now();
-                    this.updateViolationCounter();
+                }
+                
+                this.updateViolationCounter();
+                
+                // If they already exceeded violations before loading, terminate immediately
+                if (violationCount >= maxViolations && this.isActive) {
+                    this.terminateInterview();
                 }
             } catch (e) {
                 console.warn('Could not load proctoring data:', e);
@@ -2078,12 +2130,27 @@ class KafkaVideoStreamer {
             }, 8000);
         }
 
-        terminateInterview() {
+        async terminateInterview() {
             this.isActive = false;
             interviewTerminated = true;
-            alert('Interview terminated due to multiple violations.');
+            
+            try {
+                // Notify backend about malpractice termination
+                await fetch('/interview/api/terminate/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } catch (e) {
+                console.error('Failed to report termination to server:', e);
+            }
+
+            alert('Interview terminated due to multiple security violations.');
             window.location.href = '/';
         }
+
 
         updateViolationCounter() {
             const navCounter = document.getElementById('violationCounter');
@@ -2528,7 +2595,20 @@ class KafkaVideoStreamer {
         }
         return cookieValue;
     }
+    // Automatically end interview if the user navigates away or closes tab
+    window.addEventListener('beforeunload', (event) => {
+        // Only if the interview is currently active/proctoring
+        if (proctoringActive) {
+            const url = '/interview/api/terminate/'; // Use terminate for exits
+            const data = new FormData();
+            data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+            // navigator.sendBeacon is preferred for unload events
+            navigator.sendBeacon(url, data);
+        }
+    });
+
     function speakText(text) {
+
         if (!('speechSynthesis' in window)) {
             console.log("TTS not supported");
             return;

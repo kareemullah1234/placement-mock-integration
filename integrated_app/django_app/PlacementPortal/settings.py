@@ -159,9 +159,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
+
+# Only include static dir if it exists to avoid collectstatic errors
+_static_dir = BASE_DIR / 'static'
+STATICFILES_DIRS = [_static_dir] if _static_dir.exists() else []
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -179,6 +182,13 @@ HDFS_CONFIG = {
     "HOST": os.getenv("HDFS_HOST", "localhost"),
     "PORT": int(os.getenv("HDFS_PORT", "9870")),
     "USER": os.getenv("HDFS_USER", "hdfs"),
+}
+
+KAFKA_CONFIG = {
+    'bootstrap_servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092'),
+    'frame_topic': 'interview-frames',
+    'video_topic': 'interview-videos',
+    'timeout': 5,
 }
 
 CORS_ALLOW_ALL_ORIGINS = True

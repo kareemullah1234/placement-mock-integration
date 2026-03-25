@@ -21,11 +21,13 @@ class Interview(models.Model):
         ('all_questions_answered', 'All Questions Answered'),
         ('user_ended_early', 'User Ended Early'),
         ('timeout', 'Session Timeout'),
+        ('malpractice_terminated', 'Security Violations'),
         ('error', 'Technical Error'),
         ('admin_cancelled', 'Admin Cancelled'),
         ('expired', 'Interview Expired'),
         ('not_started', 'Never Started'),
     ]
+
     
     PROCESSING_STATUS_CHOICES = [
         ('pending', 'Pending Processing'),

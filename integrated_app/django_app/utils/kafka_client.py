@@ -44,12 +44,16 @@ class KafkaFrameClient:
         self.producer = None
         self._connected = False
 
-        # Try different server configurations
+        # Try different server configurations - prioritized for Docker DNS
         server_configs = [
             bootstrap_servers,
-            ['kafka-frames:9092'],
-            ['172.18.0.14:9092']
+            ['kafka:9092'],         # Correct service name from docker-compose
+            ['localhost:29092'],    # Host machine path (if running locally)
+            ['127.0.0.1:9092']
         ]
+
+        # Use a short timeout for initial attempts to prevent UI hang
+        timeout_ms = 2000 # 2 seconds per attempt
 
         for attempt, servers in enumerate(server_configs, 1):
             try:
@@ -58,23 +62,13 @@ class KafkaFrameClient:
                 self.producer = KafkaProducer(
                     bootstrap_servers=servers,
                     value_serializer=lambda x: json.dumps(x).encode('utf-8'),
-                    acks='all',
-                    retries=3,
-                    max_in_flight_requests_per_connection=1,
-                    request_timeout_ms=10000,  # 10 seconds
-                    api_version_auto_timeout_ms=5000,
+                    acks=1, # Reduce acks for faster initialization
+                    retries=1,
+                    request_timeout_ms=timeout_ms,
+                    api_version_auto_timeout_ms=timeout_ms,
                     compression_type='gzip',
-                    batch_size=32768,
-                    linger_ms=100,
-                    buffer_memory=67108864,
-                    max_request_size=10485760,
-                    # Additional connection settings for Docker network
-                    security_protocol='PLAINTEXT',
-                    metadata_max_age_ms=30000,
-                    connections_max_idle_ms=540000
+                    max_request_size=10485760 # 10MB for video
                 )
-
-                # Test the connection with a simple check
                 try:
                     # Try to get bootstrap configuration - this will trigger connection
                     self.producer.bootstrap_connected()

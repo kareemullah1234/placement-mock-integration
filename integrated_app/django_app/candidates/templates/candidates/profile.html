@@ -45,12 +45,15 @@
                 <span class="text-xl font-bold text-white tracking-tight">Placement<span class="text-blue-500">Portal</span></span>
             </div>
             <div class="flex items-center gap-6">
-                <a href="{% url 'candidate_dashboard' %}" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Dashboard</a>
-                <a href="{% url 'candidate_profile' %}" class="text-sm font-bold text-white transition-colors">Profile</a>
+                <a href="{% url 'candidates:candidate_dashboard' %}" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="{% url 'candidates:candidate_profile' %}" class="text-sm font-bold text-white transition-colors">Profile</a>
                 <div class="h-6 w-px bg-white/10 mx-2"></div>
-                <a href="{% url 'logout' %}" class="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-red-400 transition-colors">
-                    <i class="fas fa-sign-out-alt text-xs"></i> Logout
-                </a>
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-red-400 transition-colors">
+                        <i class="fas fa-sign-out-alt text-xs"></i> Logout
+                    </button>
+                </form>
             </div>
         </div>
     </nav>

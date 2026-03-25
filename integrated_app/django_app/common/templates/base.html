@@ -98,9 +98,9 @@
                 </span>
                 
                 {% if request.user.role == 'candidate' %}
-                    <a href="{% url 'candidate_dashboard' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-chart-line mr-1"></i> Dashboard</a>
+                    <a href="{% url 'candidates:candidate_dashboard' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-chart-line mr-1"></i> Dashboard</a>
                     <a href="{% url 'companies:job_list' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-briefcase mr-1"></i> Jobs</a>
-                    <a href="{% url 'candidate_profile' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-id-card mr-1"></i> Profile</a>
+                    <a href="{% url 'candidates:candidate_profile' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-id-card mr-1"></i> Profile</a>
                 {% elif request.user.role == 'company' %}
                     <a href="{% url 'companies:company_dashboard' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-chart-line mr-1"></i> Dashboard</a>
                     <a href="{% url 'companies:company_jobs' %}" class="text-[#c4c7c5] hover:text-[#e3e3e3] font-medium transition-colors text-sm"><i class="fas fa-building mr-1"></i> My Jobs</a>

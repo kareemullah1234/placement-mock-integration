@@ -897,308 +897,125 @@ def test_hdfs_connection(request):
             'hdfs_connected': False
         }, status=500)
 
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def start_interview(request, interview_id):
-    """Start interview with FLEXIBLE IST time validation and separate session IDs"""
-
-    # COMPREHENSIVE DEBUGGING
-    logger.info(f"🚀 START_INTERVIEW called for interview_id: {interview_id}")
-    logger.info(f"   User: {request.user.id} ({request.user.username})")
-    logger.info(f"   Method: {request.method}")
-    logger.info(f"   Headers: {dict(request.headers)}")
-    logger.info(f"   Body: {request.body}")
+    """Start interview with IST time validation and session preparation"""
+    logger.info(f"🚀 start_interview called for interview_id: {interview_id} | User: {request.user.username}")
 
     try:
-        # Check if interview exists first
+        # Fetch interview
         try:
             interview = Interview.objects.get(id=interview_id, student=request.user)
-            logger.info(f"✅ Interview found: {interview.id}")
-            logger.info(f"   Status: {interview.status}")
-            logger.info(f"   Scheduled: {interview.scheduled_at}")
-            logger.info(f"   Expires: {interview.expires_at}")
-            logger.info(f"   Created: {interview.created_at}")
-            logger.info(f"   Student: {interview.student.username}")
         except Interview.DoesNotExist:
             logger.error(f"❌ Interview {interview_id} not found for user {request.user.id}")
-            return JsonResponse({
-                'success': False,
-                'error': f'Interview {interview_id} not found for user {request.user.username}'
-            }, status=404)
+            return JsonResponse({'success': False, 'error': 'Interview not found'}, status=404)
 
-        # Check status
-        if interview.status != 'approved':
-            logger.error(f"❌ Interview {interview_id} status is '{interview.status}', not 'approved'")
+        # Status validation
+        if interview.status not in ('approved', 'in_progress'):
+            logger.error(f"❌ Interview {interview_id} status is '{interview.status}', cannot start")
             return JsonResponse({
                 'success': False,
-                'error': f'Interview status is "{interview.status}", not approved. Current status: {interview.status}'
+                'error': f'Cannot start interview (status: {interview.status}). Only approved interviews can be started.'
             }, status=400)
 
-        # Check if scheduled_at exists
-        if not interview.scheduled_at:
-            logger.error(f"❌ Interview {interview_id} has no scheduled_at time")
-            return JsonResponse({
-                'success': False,
-                'error': 'Interview has no scheduled time set. Please contact admin.'
-            }, status=400)
-
-        # FLEXIBLE IST time validation with 15-minute grace period
+        is_resuming = interview.status == 'in_progress'
         now_ist = get_ist_now()
-        scheduled_ist = interview.scheduled_at.astimezone(pytz.timezone('Asia/Kolkata'))
+        scheduled_ist = interview.scheduled_at.astimezone(pytz.timezone('Asia/Kolkata')) if interview.scheduled_at else None
         expires_ist = interview.expires_at.astimezone(pytz.timezone('Asia/Kolkata')) if interview.expires_at else None
 
-        # Enhanced debugging logs
-        logger.info(f"⏰ TIME VALIDATION:")
-        logger.info(f"   Current IST: {now_ist}")
-        logger.info(f"   Scheduled IST: {scheduled_ist}")
-        logger.info(f"   Expires IST: {expires_ist}")
+        # Time validation (if not resuming)
+        if not is_resuming:
+            if not scheduled_ist:
+                return JsonResponse({'success': False, 'error': 'No scheduled time set for this interview.'}, status=400)
 
-        time_diff_seconds = (scheduled_ist - now_ist).total_seconds()
-        logger.info(f"   Time difference: {time_diff_seconds} seconds ({time_diff_seconds/60:.1f} minutes)")
-        logger.info(f"   Is before scheduled? {now_ist < scheduled_ist}")
+            grace_period_minutes = 15
+            grace_start_time = scheduled_ist - timedelta(minutes=grace_period_minutes)
 
-        if expires_ist:
-            expires_diff_seconds = (expires_ist - now_ist).total_seconds()
-            logger.info(f"   Time until expiry: {expires_diff_seconds} seconds ({expires_diff_seconds/60:.1f} minutes)")
-            logger.info(f"   Is after expiry? {now_ist > expires_ist}")
+            if now_ist < grace_start_time:
+                minutes_until = int((grace_start_time - now_ist).total_seconds() / 60)
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Interview opens at {format_ist_time(grace_start_time)} IST. Please wait {minutes_until} minutes.',
+                    'scheduled_at_ist': format_ist_time(scheduled_ist)
+                }, status=400)
 
-        print(f"Current IST: {now_ist}")
-        print(f"Scheduled IST: {scheduled_ist}")
-        print(f"Expires IST: {expires_ist}")
+            if expires_ist and now_ist > expires_ist:
+                interview.status = 'expired'
+                interview.save()
+                return JsonResponse({'success': False, 'error': f'Interview expired at {format_ist_time(expires_ist)}'}, status=400)
 
-        # IMPROVED: Allow starting 15 minutes early (grace period)
-        grace_period_minutes = 15
-        grace_start_time = scheduled_ist - timedelta(minutes=grace_period_minutes)
-
-        logger.info(f"   Grace period: {grace_period_minutes} minutes")
-        logger.info(f"   Grace start time: {grace_start_time}")
-        logger.info(f"   Is before grace period? {now_ist < grace_start_time}")
-
-        # Check if too early (before grace period)
-        if now_ist < grace_start_time:
-            minutes_until = int((grace_start_time - now_ist).total_seconds() / 60)
-            logger.error(f"❌ TOO EARLY: {minutes_until} minutes until grace period starts")
-            return JsonResponse({
-                'success': False,
-                'error': f'Interview opens at {format_ist_time(grace_start_time)} IST (15 min before scheduled time). Please wait {minutes_until} minutes.',
-                'scheduled_at_ist': format_ist_time(scheduled_ist),
-                'grace_start_at_ist': format_ist_time(grace_start_time),
-                'minutes_until_start': minutes_until,
-                'debug_info': {
-                    'current_ist': format_ist_time(now_ist),
-                    'scheduled_ist': format_ist_time(scheduled_ist),
-                    'grace_start_ist': format_ist_time(grace_start_time),
-                    'time_difference_minutes': time_diff_seconds/60,
-                    'grace_period_minutes': grace_period_minutes,
-                    'interview_status': interview.status
-                }
-            }, status=400)
-
-        # Check if expired
-        if expires_ist and now_ist > expires_ist:
-            logger.error(f"❌ EXPIRED: Interview expired at {expires_ist}")
-            interview.status = 'expired'
+            # Mark as started
+            interview.status = 'in_progress'
+            interview.started_at = timezone.now()
             interview.save()
-            return JsonResponse({
-                'success': False,
-                'error': f'Interview expired at {format_ist_time(expires_ist)}',
-                'expired_at_ist': format_ist_time(expires_ist),
-                'debug_info': {
-                    'current_ist': format_ist_time(now_ist),
-                    'expired_at_ist': format_ist_time(expires_ist)
-                }
-            }, status=400)
-
-        # SUCCESS: Within valid time window
-        if now_ist < scheduled_ist:
-            minutes_early = int((scheduled_ist - now_ist).total_seconds() / 60)
-            logger.info(f"✅ Early start allowed - {minutes_early} minutes before scheduled time")
+            logger.info(f"✅ Interview {interview_id} marked as in_progress")
         else:
-            minutes_late = int((now_ist - scheduled_ist).total_seconds() / 60)
-            logger.info(f"✅ On-time or late start - {minutes_late} minutes after scheduled time")
+            logger.info(f"🔄 Resuming interview {interview_id}")
 
-        # Start the interview
-        logger.info(f"🎯 Starting interview - updating status to 'in_progress'")
-        interview.status = 'in_progress'
-        interview.started_at = timezone.now()
-        interview.save()
-        logger.info(f"✅ Interview status updated and saved")
-
-        # Initialize both frame and video session IDs
-                # Initialize session IDs safely
+        # Kafka session initialization
         frame_session_id = None
         video_session_id = None
 
-        logger.info(f"🔗 Initializing Kafka sessions - KAFKA_AVAILABLE: {KAFKA_AVAILABLE}")
-
         if KAFKA_AVAILABLE:
             try:
-                logger.info("🔗 Creating KafkaFrameClient...")
                 kafka_client = KafkaFrameClient()
-
                 if kafka_client.is_connected():
-                    logger.info("✅ Kafka client connected, creating sessions...")
-
-                    # Create frame session
-                    frame_session_id = kafka_client.start_frame_session(
-                        user=request.user,
-                        interview=interview,
-                        total_frames_estimate=0
-                    )
-                    logger.info(f"✅ Frame session created: {frame_session_id}")
-
-                    # Create video session
-                    video_session_id = (
-                        f"video_session_{interview.id}_{request.user.id}_"
-                        f"{int(timezone.now().timestamp())}"
-                    )
-                    logger.info(f"✅ Video session created: {video_session_id}")
-                else:
-                    logger.warning("⚠️ Kafka client not connected")
-
+                    frame_session_id = kafka_client.start_frame_session(request.user, interview)
+                    video_session_id = f"video_session_{interview.id}_{request.user.id}_{int(timezone.now().timestamp())}"
+                    logger.info(f"✅ Created Kafka sessions: frame={frame_session_id}, video={video_session_id}")
                 kafka_client.close()
-
             except Exception as e:
-                logger.error(f"❌ Failed to start Kafka sessions: {e}", exc_info=True)
+                logger.error(f"⚠️ Kafka initialization failed: {e}")
 
-        # Create or update InterviewFrames record
-        logger.info("💾 Creating/updating InterviewFrames record...")
-
-        try:
-            frames_record, created = InterviewFrames.objects.get_or_create(
-                interview=interview,
-                defaults={
-                    'kafka_session_id': frame_session_id,
-                    'video_session_id': video_session_id,
-                    'storage_method': 'kafka' if frame_session_id else 'local',
-                    'total_frames': 0,
-                    'total_video_chunks': 0,
-                    'video_recording_started_at': timezone.now() if video_session_id else None
-                }
-            )
-
-            if not created:
+        # Update InterviewFrames
+        frames_record, created = InterviewFrames.objects.get_or_create(
+            interview=interview,
+            defaults={
+                'kafka_session_id': frame_session_id,
+                'video_session_id': video_session_id,
+                'storage_method': 'kafka' if frame_session_id else 'local',
+            }
+        )
+        if not created:
+            if frame_session_id:
                 frames_record.kafka_session_id = frame_session_id
+                frames_record.storage_method = 'kafka'
+            if video_session_id:
                 frames_record.video_session_id = video_session_id
+            frames_record.save()
 
-                if frame_session_id:
-                    frames_record.storage_method = 'kafka'
-
-                if video_session_id and not frames_record.video_recording_started_at:
-                    frames_record.video_recording_started_at = timezone.now()
-
-                frames_record.save()
-
-            logger.info(
-                f"✅ Frames record {'created' if created else 'updated'} "
-                f"for interview {interview.id}"
-            )
-            logger.info(f"   Frame session: {frame_session_id}")
-            logger.info(f"   Video session: {video_session_id}")
-
-        except Exception as e:
-            logger.error(f"❌ Failed to create/update InterviewFrames: {e}", exc_info=True)
-
-        # Prepare success message
-        success_message = f'Interview started successfully at {format_ist_time(now_ist)}'
-
-        if now_ist < scheduled_ist:
-            minutes_early = int((scheduled_ist - now_ist).total_seconds() / 60)
-            success_message += f' ({minutes_early} minutes before scheduled time)'
-        else:
-            minutes_after = int((now_ist - scheduled_ist).total_seconds() / 60)
-            if minutes_after > 0:
-                success_message += f' ({minutes_after} minutes after scheduled time)'
-
-        logger.info(f"✅ Interview {interview.id} started successfully")
-        logger.info(f"   Message: {success_message}")
-
+        # Final response
+        time_diff_seconds = (now_ist - scheduled_ist).total_seconds() if scheduled_ist else 0
         response_data = {
             'success': True,
-            'message': success_message,
+            'message': f'Interview started successfully at {format_ist_time(now_ist)}',
             'interview_id': interview.id,
             'frame_session_id': frame_session_id,
             'video_session_id': video_session_id,
-            'started_at_ist': format_ist_time(now_ist),
-            'scheduled_at_ist': format_ist_time(scheduled_ist),
-            'expires_at_ist': format_ist_time(expires_ist) if expires_ist else None,
-            'early_start': now_ist < scheduled_ist,
             'redirect_url': '/interview/',
             'debug_info': {
                 'kafka_available': KAFKA_AVAILABLE,
-                'frame_session_created': frame_session_id is not None,
-                'video_session_created': video_session_id is not None,
-                'time_difference_minutes': time_diff_seconds / 60,
-                'grace_period_used': now_ist < scheduled_ist
+                'time_difference_minutes': round(time_diff_seconds / 60, 2)
             }
         }
 
-        logger.info("📤 Sending response")
-        # Check if it's an AJAX/Fetch request
+        logger.info(f"📤 Sending success response for interview {interview_id}")
         if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
             return JsonResponse(response_data)
         
-        # Otherwise redirect to interview interface
         return redirect('interview_interface')
 
-        # Prepare success message
-        success_message = f'Interview started successfully at {format_ist_time(now_ist)}'
-        if now_ist < scheduled_ist:
-            minutes_early = int((scheduled_ist - now_ist).total_seconds() / 60)
-            success_message += f' ({minutes_early} minutes before scheduled time)'
-        else:
-            minutes_after = int((now_ist - scheduled_ist).total_seconds() / 60)
-            if minutes_after > 0:
-                success_message += f' ({minutes_after} minutes after scheduled time)'
-
-        logger.info(f"✅ Interview {interview_id} started successfully")
-        logger.info(f"   Message: {success_message}")
-
-        response_data = {
-            'success': True,
-            'message': success_message,
-            'interview_id': interview.id,
-            'frame_session_id': frame_session_id,
-            'video_session_id': video_session_id,
-            'started_at_ist': format_ist_time(now_ist),
-            'scheduled_at_ist': format_ist_time(scheduled_ist),
-            'expires_at_ist': format_ist_time(expires_ist) if expires_ist else None,
-            'early_start': now_ist < scheduled_ist,
-            'redirect_url': '/interview/',
-            'debug_info': {
-                'kafka_available': KAFKA_AVAILABLE,
-                'frame_session_created': frame_session_id is not None,
-                'video_session_created': video_session_id is not None,
-                'time_difference_minutes': time_diff_seconds/60,
-                'grace_period_used': now_ist < scheduled_ist
-            }
-        }
-
-        logger.info(f"📤 Sending success response: {response_data}")
-        return JsonResponse(response_data)
-
-    except Interview.DoesNotExist:
-        logger.error(f"❌ Interview {interview_id} not found for user {request.user.id}")
-        return JsonResponse({
-            'success': False,
-            'error': f'Interview not found for user {request.user.username}'
-        }, status=404)
     except Exception as e:
-        logger.error(f"❌ UNEXPECTED EXCEPTION in start_interview: {type(e).__name__}: {str(e)}")
-        logger.error(f"   Interview ID: {interview_id}")
-        logger.error(f"   User: {request.user.id} ({request.user.username})")
-        logger.error(f"   Full traceback: ", exc_info=True)
+        logger.error(f"🚨 UNEXPECTED EXCEPTION in start_interview: {type(e).__name__}: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
-            'error': 'Internal server error starting interview. Please contact support.',
-            'debug_error': str(e),
-            'debug_info': {
-                'interview_id': interview_id,
-                'user_id': request.user.id,
-                'username': request.user.username,
-                'exception_type': type(e).__name__
-            }
+            'error': 'Internal server error starting interview.',
+            'debug_error': str(e)
         }, status=500)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1932,6 +1749,62 @@ def upload_video_frames(request):
         logger.error(f"Error uploading frames: {str(e)}")
         return JsonResponse({'error': 'Failed to upload frames'}, status=500)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def terminate_interview(request):
+    """End the current interview due to manual termination or security violations"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+        interview = Interview.objects.filter(
+            student=request.user,
+            status='in_progress'
+        ).first()
+
+        if not interview:
+            return JsonResponse({'success': True, 'message': 'No active interview to terminate'})
+
+        logger.warning(f"🚨 TERMINATING interview {interview.id} for user {request.user.username}")
+
+        # Update status
+        interview.status = 'completed' # Per requirement: status has to be updated to completed
+        interview.completion_reason = 'malpractice_terminated'
+        interview.completed_at = timezone.now()
+        interview.save()
+
+        # Shutdown Kafka sessions if possible
+        frames_record = InterviewFrames.objects.filter(interview=interview).first()
+        if frames_record and KAFKA_AVAILABLE:
+            try:
+                kafka_client = KafkaFrameClient()
+                if kafka_client.is_connected():
+                    if frames_record.kafka_session_id:
+                        kafka_client.end_frame_session(frames_record.kafka_session_id, frames_record.total_frames)
+                    if frames_record.video_session_id:
+                        kafka_client.end_video_session(frames_record.video_session_id, frames_record.total_video_chunks)
+                    kafka_client.close()
+            except Exception as kafka_error:
+                logger.error(f"Failed to close Kafka sessions during termination: {kafka_error}")
+
+        # Stop voice session if exists
+        voice_session = VoiceInterviewSession.objects.filter(interview=interview).first()
+        if voice_session:
+            voice_session.session_status = 'completed' # Per requirement
+            voice_session.end_reason = 'error'
+            voice_session.voice_session_ended_at = timezone.now()
+            voice_session.save()
+
+        return JsonResponse({
+            'success': True, 
+            'message': 'Interview has been terminated due to security violations.',
+            'redirect_url': '/interview/'
+        })
+
+    except Exception as e:
+        logger.error(f"Error in terminate_interview: {e}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -2112,9 +1985,11 @@ def get_current_interview(request):
 
 
 @login_required
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 def request_interview(request):
-    """Request a new interview"""
+
+    """Request a new interview slot"""
+    logger.info(f"📩 request_interview view hit by user: {request.user.username}")
     try:
         # Check if user already has an active request or approved interview
         existing_interview = Interview.objects.filter(
@@ -3043,6 +2918,9 @@ class SpeechToText:
         try:
             logger.info(f"Processing {len(audio_data)} bytes with {self._provider} STT")
 
+            if self._provider == 'none':
+                return "Speech detection unavailable (Missing API Keys/Libraries)"
+
             if self._provider == 'faster_whisper':
                 return self._convert_with_faster_whisper(audio_data)
 
@@ -3071,7 +2949,9 @@ class SpeechToText:
                     logger.info("STT provider initialized: Gemini")
                     return
 
-            raise ValueError("No STT provider is available. Install faster-whisper or configure Gemini.")
+            # No provider available - set to 'none' and log error, but DON'T raise
+            self.__class__._provider = 'none'
+            logger.error("❌ No STT provider (Whisper or Gemini) is available. Interview will proceed with text-only responses.")
 
     def _try_init_faster_whisper(self):
         try:
@@ -3149,7 +3029,7 @@ class SpeechToText:
         from google.genai import types
 
         response = self.client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=[
                 types.Part.from_bytes(
                     data=audio_data,
@@ -3502,54 +3382,10 @@ def start_voice_interview(request):
     except Exception as e:
         logger.error(f"Error starting voice interview: {e}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
-        # ============================
-        # GET FIRST QUESTION FROM CSV
-        # ============================
-
-        question_obj = get_random_question(interview)
-
-        if not question_obj:
-            return JsonResponse({
-                'success': False,
-                'error': 'No questions available in database'
-            }, status=400)
-
-        first_question = {
-            'question': question_obj.question_text,
-            'question_id': str(question_obj.id),
-            'stage': 'technical',
-            'has_audio': False,
-            'audio_base64': None
-        }
-
-        # Save question in session
-        voice_session.session_data['current_question'] = first_question['question']
-        voice_session.session_data['current_question_id'] = first_question['question_id']
-        voice_session.current_question_number = 1
-        voice_session.save()
-
-        return JsonResponse({
-            'success': True,
-            'question': first_question['question'],
-            'question_id': first_question['question_id'],
-            'question_number': 1,
-            'stage': first_question['stage'],
-            'session_id': voice_session.id,
-            'total_questions': interview.total_questions,
-            'has_audio': False,
-            'audio_base64': None,
-        })
-
-    except Exception as e:
-        logger.error(f"Error starting voice interview: {e}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': 'Failed to start voice interview'
-        }, status=500)
-
 
 # Replace your existing process_voice_response view with this:
 @csrf_exempt
+
 @require_http_methods(["POST"])
 def process_voice_response(request):
     """Process voice response with low-latency local persistence and cached TTS."""
@@ -3558,10 +3394,7 @@ def process_voice_response(request):
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
 
-        audio_file = request.FILES.get('audio')
-        if not audio_file:
-            return JsonResponse({'error': 'No audio file provided'}, status=400)
-
+        # 1. Identify Interview and Session first
         interview = Interview.objects.filter(
             student=request.user,
             status='in_progress'
@@ -3574,45 +3407,75 @@ def process_voice_response(request):
         if not voice_session:
             return JsonResponse({'error': 'Voice session not found'}, status=404)
 
-        audio_bytes = b''.join(audio_file.chunks())
         agent = VoiceInterviewAgent()
+        transcription = None
+        audio_bytes = None
 
-        stt_result = agent.process_voice_response_with_gemini(audio_bytes)
-        if not stt_result['success']:
-            return JsonResponse({
-                'success': False,
-                'error': stt_result['error']
-            })
+        # 2. Handle JSON/Text Response (Fallback)
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                transcription = data.get('response')
+                if transcription:
+                    logger.info(f"Processing JSON text response for Q{voice_session.current_question_number}")
+            except Exception as e:
+                logger.error(f"Error parsing JSON response: {e}")
 
-        transcription = stt_result['transcription']
+        # 3. Handle Audio Blob (Primary)
+        if not transcription:
+            audio_file = request.FILES.get('audio')
+            if not audio_file:
+                return JsonResponse({'error': 'No audio file or text response provided'}, status=400)
+
+            audio_bytes = b''.join(audio_file.chunks())
+            stt_result = agent.process_voice_response_with_gemini(audio_bytes)
+            
+            if not stt_result['success']:
+                return JsonResponse({
+                    'success': False,
+                    'error': stt_result['error']
+                })
+            transcription = stt_result['transcription']
+
+        if not transcription:
+            return JsonResponse({'success': False, 'error': 'Could not determine response text'})
+
+        # 4. Process the Interaction
         current_question_number = voice_session.current_question_number
         current_question_id = voice_session.session_data.get('current_question_id')
 
         if not current_question_id:
-            return JsonResponse({'success': False, 'error': 'Current question is missing from session'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Current question ID missing'}, status=400)
 
         try:
             current_question = Question.objects.get(id=current_question_id)
         except Question.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Current question no longer exists'}, status=404)
+            return JsonResponse({'success': False, 'error': 'Question no longer exists'}, status=404)
 
-        local_audio_path = _save_audio_locally(interview, current_question_number, audio_bytes)
+        # 5. Persistence
+        local_audio_path = None
+        if audio_bytes:
+            local_audio_path = _save_audio_locally(interview, current_question_number, audio_bytes)
+        
         response_record = InterviewResponse.objects.create(
             interview=interview,
             question=current_question,
-            audio_file_path=local_audio_path,
+            audio_file_path=local_audio_path or 'text_only_fallback',
             local_file_path=local_audio_path
         )
+        
         _append_interview_context(voice_session, current_question, transcription)
 
-        threading.Thread(
-            target=_upload_audio_to_hdfs_in_background,
-            args=(response_record.id, interview.id, current_question_number, local_audio_path),
-            daemon=True,
-        ).start()
+        if local_audio_path:
+            threading.Thread(
+                target=_upload_audio_to_hdfs_in_background,
+                args=(response_record.id, interview.id, current_question_number, local_audio_path),
+                daemon=True,
+            ).start()
 
-        voice_session.record_question_answered(audio_saved=True)
+        voice_session.record_question_answered(audio_saved=bool(local_audio_path))
 
+        # 6. Check Completion
         if current_question_number >= interview.total_questions:
             voice_session.complete_session(reason='completed')
 
@@ -3625,16 +3488,7 @@ def process_voice_response(request):
             interview.processing_status = 'processing'
             if interview.started_at:
                 interview.interview_duration_seconds = int((timezone.now() - interview.started_at).total_seconds())
-            interview.save(update_fields=[
-                'status',
-                'completed_at',
-                'voice_interview_completed',
-                'completion_reason',
-                'questions_answered',
-                'completion_percentage',
-                'processing_status',
-                'interview_duration_seconds',
-            ])
+            interview.save()
 
             threading.Thread(
                 target=_run_final_interview_analysis,
@@ -3646,21 +3500,21 @@ def process_voice_response(request):
                 'success': True,
                 'interview_complete': True,
                 'transcription': transcription,
-                'message': 'Interview over.',
+                'message': 'Interview concluded. Thank you.',
                 'redirect_url': '/',
             })
 
+        # 7. Next Question
         next_question_number = current_question_number + 1
         question_obj = get_random_question(interview, excluded_question_ids={current_question.id})
 
         if not question_obj:
             return JsonResponse({
                 'success': False,
-                'error': 'No more questions available'
+                'error': 'No questions remaining in database'
             })
 
         voice_session.current_question_number = next_question_number
-        voice_session.current_stage = 'technical'
         voice_session.session_data['current_question'] = question_obj.question_text
         voice_session.session_data['current_question_id'] = str(question_obj.id)
         voice_session.save()
@@ -3673,9 +3527,7 @@ def process_voice_response(request):
             'next_question': question_obj.question_text,
             'question_id': str(question_obj.id),
             'question_number': next_question_number,
-            'progress_percentage': int(
-                (next_question_number / interview.total_questions) * 100
-            ),
+            'progress_percentage': int((next_question_number / interview.total_questions) * 100),
             'interview_complete': False,
             'audio_base64': audio_payload['audio_base64'],
             'has_audio': audio_payload['has_audio']

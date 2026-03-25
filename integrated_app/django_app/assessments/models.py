@@ -17,6 +17,8 @@ class CandidateTestAttempt(models.Model):
     aptitude_score = models.IntegerField(default=0)
     skill_score = models.IntegerField(default=0)
     coding_score = models.IntegerField(default=0)
+    communication_answers = models.JSONField(null=True, blank=True)
+    malpractice_log = models.JSONField(null=True, blank=True)
     score = models.IntegerField()
     passed = models.BooleanField()
     attempted_at = models.DateTimeField(auto_now_add=True)

@@ -45,12 +45,15 @@
                 <span class="text-xl font-bold text-white tracking-tight">Placement<span class="text-blue-500">Portal</span></span>
             </div>
             <div class="flex items-center gap-6">
-                <a href="{% url 'candidate_dashboard' %}" class="text-sm font-bold text-white transition-colors">Dashboard</a>
-                <a href="{% url 'candidate_profile' %}" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Profile</a>
+                <a href="{% url 'candidates:candidate_dashboard' %}" class="text-sm font-bold text-white transition-colors">Dashboard</a>
+                <a href="{% url 'candidates:candidate_profile' %}" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Profile</a>
                 <div class="h-6 w-px bg-white/10 mx-2"></div>
-                <a href="{% url 'logout' %}" class="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-red-400 transition-colors">
-                    <i class="fas fa-sign-out-alt text-xs"></i> Logout
-                </a>
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-red-400 transition-colors">
+                        <i class="fas fa-sign-out-alt text-xs"></i> Logout
+                    </button>
+                </form>
             </div>
         </div>
     </nav>
@@ -68,7 +71,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-                <a href="/companies/jobs/" class="group glass-card p-8 rounded-[2.5rem] flex items-center justify-between border-blue-500/20 hover:border-blue-500/40 hover:bg-white/5 transition-all transform hover:-translate-y-2">
+                <a href="{% url 'companies:job_list' %}" class="group glass-card p-8 rounded-[2.5rem] flex items-center justify-between border-blue-500/20 hover:border-blue-500/40 hover:bg-white/5 transition-all transform hover:-translate-y-2">
                     <div>
                         <h3 class="text-2xl font-bold text-white mb-2">Browse Available Jobs</h3>
                         <p class="text-slate-400 text-sm">Find your next career opportunity and apply with AI matching.</p>
@@ -77,7 +80,7 @@
                         <i class="fas fa-briefcase text-xl text-white"></i>
                     </div>
                 </a>
-                <a href="{% url 'candidate_profile' %}" class="group glass-card p-8 rounded-[2.5rem] flex items-center justify-between border-purple-500/20 hover:border-purple-500/40 hover:bg-white/5 transition-all transform hover:-translate-y-2">
+                <a href="{% url 'candidates:candidate_profile' %}" class="group glass-card p-8 rounded-[2.5rem] flex items-center justify-between border-purple-500/20 hover:border-purple-500/40 hover:bg-white/5 transition-all transform hover:-translate-y-2">
                     <div>
                         <h3 class="text-2xl font-bold text-white mb-2">Update Resume</h3>
                         <p class="text-slate-400 text-sm">Keep your professional profile fresh for better AI matching.</p>
@@ -88,15 +91,20 @@
                 </a>
             </div>
 
-            <!-- Interviews -->
             <div class="mb-16">
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="w-10 h-10 bg-purple-600/10 rounded-xl flex items-center justify-center border border-purple-500/20">
-                        <i class="fas fa-microphone-alt text-purple-500"></i>
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-purple-600/10 rounded-xl flex items-center justify-center border border-purple-500/20">
+                            <i class="fas fa-microphone-alt text-purple-500"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white">Company Interviews</h2>
                     </div>
-                    <h2 class="text-2xl font-bold text-white">Mock Interviews</h2>
+                    <button onclick="requestInterview()" class="group bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-plus text-[10px] group-hover:rotate-90 transition-transform"></i> Request Interview Slot
+                    </button>
                 </div>
                 <div class="glass-card rounded-[2.5rem] overflow-hidden border border-white/5">
+
                     <table class="w-full text-left">
                         <thead class="bg-white/5 text-slate-400 border-b border-white/5">
                             <tr>
@@ -139,7 +147,7 @@
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="4" class="px-8 py-16 text-center text-slate-600 font-medium">No mock interviews scheduled.</td></tr>
+                            <tr><td colspan="4" class="px-8 py-16 text-center text-slate-600 font-medium">No company interviews scheduled.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -180,9 +188,9 @@
                                 </td>
                                 <td class="px-8 py-6 text-right">
                                     {% if application.id in attempted_ids %}
-                                        <span class="text-emerald-500 font-bold text-xs"><i class="fas fa-check-double mr-2"></i>Completed</span>
-                                    {% elif application.status == 'shortlisted' or application.status == 'test_scheduled' %}
-                                        <a href="{% url 'assessments:test_instruction' application.id %}" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg">Take Assessment</a>
+                                        <span class="text-emerald-500 font-bold text-xs"><i class="fas fa-check-double mr-2"></i>Attempted</span>
+                                    {% elif application.status == 'applied' or application.status == 'shortlisted' or application.status == 'test_scheduled' %}
+                                        <a href="{% url 'assessments:test_instruction' application.id %}" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all transform hover:scale-105">Start Assessment</a>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -196,7 +204,34 @@
         </div>
     </main>
 
+    <script>
+        async function requestInterview() {
+            try {
+                const response = await fetch('{% url "request_interview" %}', {
+                    method: 'GET', // request_interview currently handles GET
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message || 'Interview slot requested successfully!');
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to request interview slot');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while requesting the interview');
+            }
+        }
+    </script>
+
     <footer class="relative z-10 py-12 border-t border-white/5 text-center">
+
         <p class="text-slate-600 text-[10px] font-bold uppercase tracking-[0.2em]">&copy; 2026 Placement Portal • AI recruitment</p>
     </footer>
 </body>

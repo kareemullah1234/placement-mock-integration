@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from common.models import Skill
 from django.contrib.auth import get_user_model
 from interviews.models import Interview
+from django.contrib import messages
 
 User = get_user_model()
 
@@ -82,14 +83,27 @@ def candidate_profile(request):
                 skill_obj, created = Skill.objects.get_or_create(name=skill)
                 candidate.skills.add(skill_obj)
             candidate.extracted_skills = ",".join(skills_list)
-        candidate.save()
-        return redirect("candidate_dashboard")
+            candidate.save()
+            messages.success(request, "Resume uploaded and skills parsed successfully!")
+            return redirect("candidates:resume_analysis")
+        else:
+            candidate.save()
+            if not candidate.resume:
+                messages.error(request, "Please upload a resume to proceed.")
+                return render(request, "candidates/profile.html", {"candidate": candidate})
+            return redirect("candidates:candidate_dashboard")
 
     return render(request, "candidates/profile.html", {"candidate": candidate})
 
 @login_required
 def candidate_dashboard(request):
-    candidate = get_object_or_404(CandidateProfile, user=request.user)
+    candidate, created = CandidateProfile.objects.get_or_create(user=request.user)
+    
+    # Block dashboard access if resume is missing
+    if not candidate.resume:
+        messages.warning(request, "You must upload your resume before you can view the dashboard.")
+        return redirect("candidates:candidate_profile")
+        
     applications = Application.objects.filter(candidate=candidate)
     attempts = CandidateTestAttempt.objects.filter(application__candidate=candidate)
     attempted_ids = attempts.values_list("application_id", flat=True)
@@ -185,3 +199,42 @@ def get_profile(request):
         "resume": profile.resume.url if profile.resume else None
     }
     return JsonResponse(data)
+
+@login_required
+def resume_analysis(request):
+    candidate = get_object_or_404(CandidateProfile, user=request.user)
+    
+    if not candidate.resume:
+        return redirect("candidates:candidate_profile")
+
+    candidate_skills = set(candidate.skills.all())
+    active_jobs = JobPost.objects.filter(is_active=True).prefetch_related('skills', 'company')
+
+    job_matches = []
+    for job in active_jobs:
+        job_skills = set(job.skills.all())
+        total_required = len(job_skills)
+        
+        if total_required == 0:
+            match_percentage = 0
+            matched_skill_names = []
+        else:
+            matched_skills = candidate_skills.intersection(job_skills)
+            matched_count = len(matched_skills)
+            match_percentage = (matched_count / total_required) * 100
+            matched_skill_names = [s.name for s in matched_skills]
+
+        job_matches.append({
+            'job': job,
+            'match_percentage': round(match_percentage, 1),
+            'matched_skills': matched_skill_names,
+            'total_skills': total_required
+        })
+
+    # Sort by match percentage
+    job_matches.sort(key=lambda x: x['match_percentage'], reverse=True)
+
+    return render(request, "candidates/resume_analysis.html", {
+        "candidate": candidate,
+        "job_matches": job_matches
+    })

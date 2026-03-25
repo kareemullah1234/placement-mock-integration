@@ -11,12 +11,35 @@ def apply_job(request, job_id):
     candidate = get_object_or_404(CandidateProfile, user=request.user)
     job = get_object_or_404(JobPost, id=job_id)
     
-    application, created = Application.objects.get_or_create(
-        candidate=candidate,
-        job=job,
-        defaults={'status': 'applied'}
-    )
-    return redirect("applications:choose_test_slot", application_id=application.id)
+    if request.method == "POST":
+        # Save Basic & User details to profile
+        candidate.full_name = request.POST.get("full_name")
+        candidate.phone = request.POST.get("phone")
+        candidate.gender = request.POST.get("gender")
+        candidate.location = request.POST.get("location")
+        candidate.differently_abled = request.POST.get("differently_abled") == "Yes"
+        
+        candidate.user_type = request.POST.get("user_type")
+        candidate.domain = request.POST.get("domain")
+        candidate.college_name = request.POST.get("college_name")
+        candidate.degree = request.POST.get("degree")
+        candidate.course_specialization = request.POST.get("course_specialization")
+        candidate.graduating_year = request.POST.get("graduating_year")
+        candidate.course_duration = request.POST.get("course_duration")
+        
+        candidate.cgpa = request.POST.get("cgpa")
+        candidate.backlogs = request.POST.get("backlogs") or 0
+        candidate.save()
+
+        # Create application
+        application, created = Application.objects.get_or_create(
+            candidate=candidate,
+            job=job,
+            defaults={'status': 'applied'}
+        )
+        return redirect("companies:job_list")
+
+    return render(request, "applications/apply_job.html", {"job": job, "candidate": candidate})
 
 @login_required
 def choose_test_slot(request, application_id):

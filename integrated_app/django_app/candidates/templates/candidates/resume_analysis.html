@@ -1,0 +1,126 @@
+{% extends 'candidates/base.html' %}
+
+{% block title %}Resume Analysis | Placement AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .match-card {
+        background: rgba(30, 31, 32, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(68, 71, 70, 0.5);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .match-card:hover {
+        border-color: #a8c7fa;
+        transform: translateY(-4px);
+        background: rgba(30, 31, 32, 0.9);
+    }
+    .percentage-circle {
+        position: relative;
+        width: 80px;
+        height: 80px;
+    }
+    .percentage-circle svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+    .percentage-circle circle {
+        fill: none;
+        stroke-width: 6;
+        stroke-linecap: round;
+    }
+    .percentage-circle .bg {
+        stroke: #444746;
+    }
+    .percentage-circle .progress {
+        stroke: url(#gradient);
+        transition: stroke-dashoffset 1s ease-out;
+    }
+    .floating-badge {
+        background: linear-gradient(90deg, #4285f4, #9b72cb);
+        box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12 animate__animated animate__fadeIn">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+            Resume <span class="gemini-gradient-text">Analysis</span>
+        </h1>
+        <p class="text-[#c4c7c5] text-lg max-w-2xl mx-auto">
+            Our AI engine has cross-referenced your extracted skills against current job openings to find your best career matches.
+        </p>
+    </div>
+
+    <!-- Match Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        {% for item in job_matches %}
+        <div class="match-card rounded-3xl p-6 flex flex-col justify-between">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-1">{{ item.job.title }}</h3>
+                    <p class="text-sm text-[#a8c7fa] flex items-center">
+                        <i class="fas fa-building mr-2"></i> {{ item.job.company.company_name }}
+                    </p>
+                </div>
+                <div class="percentage-circle">
+                    <svg viewBox="0 0 100 100">
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#4285f4" />
+                                <stop offset="100%" style="stop-color:#91b0ff" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="bg" cx="50" cy="50" r="40"></circle>
+                        <circle class="progress" cx="50" cy="50" r="40" 
+                                style="stroke-dasharray: 251.2; stroke-dashoffset: calc(251.2 - (251.2 * {{ item.match_percentage }}) / 100);"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center font-bold text-sm text-white">
+                        {{ item.match_percentage }}%
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="text-xs font-bold text-[#8e918f] uppercase tracking-widest mb-3">Matched Skills</p>
+                <div class="flex flex-wrap gap-2">
+                    {% for skill in item.matched_skills %}
+                    <span class="px-3 py-1 bg-[#282a2c] border border-[#444746] rounded-full text-xs text-[#e3e3e3]">
+                        {{ skill }}
+                    </span>
+                    {% empty %}
+                    <span class="text-sm text-[#747775] italic">No skill match yet</span>
+                    {% endfor %}
+                </div>
+                {% if item.total_skills > item.matched_skills|length %}
+                <p class="text-[10px] text-[#747775] mt-3">
+                    + Missing {{ item.total_skills|add:"-item.matched_skills|length" }} required skills for this role.
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-[#444746]">
+                <span class="text-xs text-[#c4c7c5]">{{ item.job.location }}</span>
+                <a href="{% url 'applications:apply_job' item.job.id %}" class="px-5 py-2 floating-badge rounded-full text-xs font-bold text-white hover:opacity-90 transition-all">
+                    Apply Now
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-20 text-center glass-card">
+            <i class="fas fa-search-minus text-4xl text-[#444746] mb-4"></i>
+            <p class="text-[#c4c7c5]">No active job openings found to match matches with.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'candidates:candidate_dashboard' %}" class="inline-flex items-center text-[#a8c7fa] hover:text-white transition-colors group">
+            Go to Dashboard <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}

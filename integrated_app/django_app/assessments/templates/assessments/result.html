@@ -28,6 +28,11 @@
             0%, 100% { opacity: 0.1; }
             50% { opacity: 0.3; }
         }
+        .btn-loading {
+            opacity: 0.7;
+            pointer-events: none;
+            cursor: wait;
+        }
     </style>
 </head>
 <body class="relative overflow-y-auto flex items-center justify-center py-12 px-4">
@@ -66,6 +71,24 @@
                     </div>
                 </div>
             </div>
+
+            {% if passed %}
+            <div id="mockInterviewCard" class="mt-8 p-8 bg-blue-600/10 rounded-3xl border border-blue-500/20 text-center animate-fade-in relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <i class="fas fa-robot text-6xl text-blue-400"></i>
+                </div>
+                <h3 class="text-xl font-black text-white mb-2">Excellent Performance! 🎉</h3>
+                <p class="text-slate-400 text-sm mb-6 leading-relaxed">You've cleared the technical threshold. Take the next step by requesting a secure, AI-powered **Mock Interview** session to sharpen your profile.</p>
+                
+                <div id="requestStatus" class="hidden mb-6 p-4 rounded-xl text-sm font-bold"></div>
+
+                <button id="requestMockBtn" onclick="requestMockInterview()" 
+                    class="inline-flex items-center gap-3 px-10 py-4 bg-white text-blue-950 font-black rounded-2xl text-xs uppercase tracking-[0.2em] hover:bg-blue-50 transition-all active:scale-95 shadow-xl shadow-blue-500/10 group">
+                    <span>Request AI Interview</span>
+                    <i class="fas fa-microphone-alt group-hover:scale-125 transition-transform text-blue-600"></i>
+                </button>
+            </div>
+            {% endif %}
         </div>
 
         <a href="/candidates/dashboard/" 
@@ -79,5 +102,63 @@
             All Rights Reserved.
         </p>
     </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function requestMockInterview() {
+            const btn = document.getElementById('requestMockBtn');
+            const status = document.getElementById('requestStatus');
+            
+            if (!btn) return;
+
+            btn.classList.add('btn-loading');
+            btn.querySelector('span').innerText = 'Submitting Request...';
+
+            try {
+                const response = await fetch('/interview/api/request-interview/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                status.classList.remove('hidden', 'bg-red-500/10', 'text-red-400', 'bg-emerald-500/10', 'text-emerald-400');
+                
+                if (data.success) {
+                    status.innerText = "✓ request submitted! You will be notified of approval soon.";
+                    status.classList.add('bg-emerald-500/10', 'text-emerald-400');
+                    btn.classList.add('hidden');
+                } else {
+                    status.innerText = "⚠ " + (data.error || "Failed to submit request.");
+                    status.classList.add('bg-red-500/10', 'text-red-400');
+                    btn.classList.remove('btn-loading');
+                    btn.querySelector('span').innerText = 'Try Again';
+                }
+            } catch (err) {
+                status.classList.remove('hidden');
+                status.innerText = "⚠ " + "Network error. Please try again later.";
+                status.classList.add('bg-red-500/10', 'text-red-400');
+                btn.classList.remove('btn-loading');
+                btn.querySelector('span').innerText = 'Try Again';
+            }
+        }
+    </script>
 </body>
 </html>

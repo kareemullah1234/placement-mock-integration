@@ -62,7 +62,7 @@
                 <a href="{% url 'download_report' interview.id %}" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-gemini-primary to-gemini-secondary text-white font-semibold rounded-xl text-center shadow-lg hover:shadow-indigo-500/25 transform hover:-translate-y-0.5 transition-all duration-200">
                     <i class="fas fa-file-pdf mr-2"></i> Download Full PDF Report
                 </a>
-                <a href="{% url 'candidate_dashboard' %}" class="w-full sm:w-auto px-8 py-3.5 bg-gray-800 text-gray-300 font-semibold rounded-xl text-center hover:bg-gray-700 hover:text-white border border-gray-700 transform hover:-translate-y-0.5 transition-all duration-200">
+                <a href="{% url 'candidates:candidate_dashboard' %}" class="w-full sm:w-auto px-8 py-3.5 bg-gray-800 text-gray-300 font-semibold rounded-xl text-center hover:bg-gray-700 hover:text-white border border-gray-700 transform hover:-translate-y-0.5 transition-all duration-200">
                     <i class="fas fa-arrow-left mr-2"></i> Return to Dashboard
                 </a>
             </div>
