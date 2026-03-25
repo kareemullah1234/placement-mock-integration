@@ -172,7 +172,7 @@ def _decode_base64_payload(encoded_data):
         return None
 
     normalized_data = encoded_data.strip()
-    if normalized_data.startswith('data:') and ',' in normalized_data:
+    if ',' in normalized_data:
         normalized_data = normalized_data.split(',', 1)[1]
 
     normalized_data = ''.join(normalized_data.split())
@@ -1816,7 +1816,7 @@ def end_interview(request):
 
         interview = Interview.objects.filter(
             student=request.user,
-            status='in_progress'
+            status__in=['in_progress', 'completed']
         ).first()
 
         if not interview:
@@ -2926,6 +2926,9 @@ class SpeechToText:
 
             if self._provider == 'whisper':
                 return self._convert_with_openai_whisper(audio_data)
+                
+            if self._provider == 'speech_recognition':
+                return self._convert_with_speech_recognition(audio_data)
 
             return self._convert_with_gemini(audio_data)
 
@@ -2938,20 +2941,26 @@ class SpeechToText:
             if self.__class__._provider is not None:
                 return
 
-            provider_order = [self.preferred_provider, 'whisper', 'gemini']
+            # Always prioritize faster_whisper, then whisper, then free speech_recognition, and gemini last 
+            # (since gemini API keys often expire or are invalid but self.client still initializes)
+            provider_order = [self.preferred_provider, 'whisper', 'speech_recognition', 'gemini']
+            
             for provider in provider_order:
                 if provider == 'faster_whisper' and self._try_init_faster_whisper():
                     return
                 if provider == 'whisper' and self._try_init_openai_whisper():
+                    return
+                if provider == 'speech_recognition' and self._try_init_speech_recognition():
                     return
                 if provider == 'gemini' and self.client:
                     self.__class__._provider = 'gemini'
                     logger.info("STT provider initialized: Gemini")
                     return
 
+
             # No provider available - set to 'none' and log error, but DON'T raise
             self.__class__._provider = 'none'
-            logger.error("❌ No STT provider (Whisper or Gemini) is available. Interview will proceed with text-only responses.")
+            logger.error("❌ No STT provider (Whisper, Gemini, SpeechRecognition) is available. Interview will proceed with text-only responses.")
 
     def _try_init_faster_whisper(self):
         try:
@@ -3047,6 +3056,54 @@ class SpeechToText:
 
         logger.info(f"Gemini transcription: {transcription}")
         return transcription
+
+    def _try_init_speech_recognition(self):
+        try:
+            import speech_recognition as sr
+            self.__class__._provider = 'speech_recognition'
+            self.__class__._sr_recognizer = sr.Recognizer()
+            logger.info("STT provider initialized: SpeechRecognition (Google Free API)")
+            return True
+        except ImportError:
+            logger.warning("speech_recognition module not installed")
+            return False
+
+    def _convert_with_speech_recognition(self, audio_data: bytes) -> str:
+        audio_path = self._write_temp_audio_file(audio_data)
+        try:
+            import speech_recognition as sr
+            import pydub
+            import wave
+            
+            # Convert webm to wav using pydub
+            wav_path = audio_path.replace('.webm', '.wav').replace('.webp', '.wav')
+            try:
+                audio = pydub.AudioSegment.from_file(audio_path)
+                audio.export(wav_path, format="wav")
+            except Exception as e:
+                logger.error(f"Pydub conversion failed: {e}")
+                return None
+                
+            transcription = ""
+            recognizer = self.__class__._sr_recognizer
+            with sr.AudioFile(wav_path) as source:
+                audio_data_sr = recognizer.record(source)
+                try:
+                    transcription = recognizer.recognize_google(audio_data_sr)
+                    logger.info(f"SpeechRecognition transcription: {transcription}")
+                except sr.UnknownValueError:
+                    logger.warning("Google Speech Recognition could not understand audio")
+                except sr.RequestError as e:
+                    logger.error(f"Google STT service error: {e}")
+                    
+            self._cleanup_temp_file(wav_path)
+            return transcription if transcription else None
+            
+        except Exception as e:
+            logger.error(f"SpeechRecognition conversion error: {e}")
+            return None
+        finally:
+            self._cleanup_temp_file(audio_path)
 
     def _write_temp_audio_file(self, audio_data: bytes):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as temp_audio:
@@ -3397,11 +3454,18 @@ def process_voice_response(request):
         # 1. Identify Interview and Session first
         interview = Interview.objects.filter(
             student=request.user,
-            status='in_progress'
+            status__in=['in_progress', 'completed']
         ).first()
 
         if not interview:
             return JsonResponse({'error': 'No active interview found'}, status=404)
+            
+        if interview.status == 'completed':
+            return JsonResponse({
+                'success': True,
+                'interview_complete': True,
+                'message': 'Interview is already complete.'
+            })
 
         voice_session = VoiceInterviewSession.objects.filter(interview=interview).first()
         if not voice_session:

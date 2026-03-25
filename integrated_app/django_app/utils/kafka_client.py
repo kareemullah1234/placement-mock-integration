@@ -211,10 +211,14 @@ class KafkaFrameClient:
         """Retrieve video chunks from Kafka for playback - OPTIMIZED VERSION"""
         try:
             # Use internal Docker network addresses
-            bootstrap_servers = [
-                'kafka-frames:9092',
-                '172.18.0.14:9092'
-            ]
+            # Use service names from docker-compose/settings
+            bootstrap_servers = self.config.get('bootstrap_servers', ['kafka:9092'])
+            if isinstance(bootstrap_servers, str):
+                bootstrap_servers = [bootstrap_servers]
+            
+            # Add fallback if needed
+            if 'kafka:9092' not in bootstrap_servers:
+                bootstrap_servers.append('kafka:9092')
 
             consumer = None
             for servers in [[server] for server in bootstrap_servers]:

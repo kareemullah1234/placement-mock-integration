@@ -1214,6 +1214,7 @@
                 }
 
                 this.updateAIStatus('speaking', 'Speaking question...');
+                // Always cancel and resume to prevent Chrome from silently pausing
                 this.speechSynthesis.cancel();
                 this.speechSynthesis.resume();
 
@@ -1231,10 +1232,21 @@
                 utterance.pitch = 1.0;
                 utterance.volume = 1.0;
 
+                // Chrome bug fix: keepalive interval to prevent speech from hanging
+                this.speechKeepaliveInterval = setInterval(() => {
+                    if (this.speechSynthesis.speaking) {
+                        this.speechSynthesis.resume();
+                    }
+                }, 5000); // Resume every 5 seconds
+
                 const finishSpeech = () => {
                     if (this.pendingSpeechTimeout) {
                         clearTimeout(this.pendingSpeechTimeout);
                         this.pendingSpeechTimeout = null;
+                    }
+                    if (this.speechKeepaliveInterval) {
+                        clearInterval(this.speechKeepaliveInterval);
+                        this.speechKeepaliveInterval = null;
                     }
                     this.updateAIStatus('ready', 'Ready for your response');
                     resolve();
@@ -1255,6 +1267,11 @@
                     finishSpeech();
                 }, Math.max(3000, question.length * 90));
 
+                // ✅ FIX: cancel() is async in Chrome — wait 150ms for queue to flush
+                // before queuing the new utterance, otherwise it silently drops it.
+                this.speechSynthesis.cancel();
+                await new Promise(r => setTimeout(r, 150));
+                this.speechSynthesis.resume();
                 this.speechSynthesis.speak(utterance);
             });
         }
